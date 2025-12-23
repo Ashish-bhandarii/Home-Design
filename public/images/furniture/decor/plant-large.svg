@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" width="60" height="60">
+  <!-- Large Indoor Plant - Top View Floor Plan -->
+  <!-- Pot -->
+  <circle cx="30" cy="30" r="18" fill="#D4A574" stroke="#A67B5B" stroke-width="2"/>
+  <!-- Soil -->
+  <circle cx="30" cy="30" r="14" fill="#78350F"/>
+  <!-- Foliage (fiddle leaf fig style) -->
+  <g fill="#22C55E" stroke="#16A34A" stroke-width="1">
+    <ellipse cx="30" cy="18" rx="8" ry="12"/>
+    <ellipse cx="18" cy="28" rx="10" ry="7" transform="rotate(-30 18 28)"/>
+    <ellipse cx="42" cy="28" rx="10" ry="7" transform="rotate(30 42 28)"/>
+    <ellipse cx="22" cy="40" rx="9" ry="6" transform="rotate(-45 22 40)"/>
+    <ellipse cx="38" cy="40" rx="9" ry="6" transform="rotate(45 38 40)"/>
+  </g>
+  <!-- Center -->
+  <circle cx="30" cy="30" r="3" fill="#166534"/>
+</svg>

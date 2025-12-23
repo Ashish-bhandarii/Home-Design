@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 80" width="170" height="80">
+  <!-- Freestanding Bathtub - Top View Floor Plan -->
+  <defs>
+    <linearGradient id="tubWhite" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF"/>
+      <stop offset="50%" style="stop-color:#F3F4F6"/>
+      <stop offset="100%" style="stop-color:#FFFFFF"/>
+    </linearGradient>
+    <linearGradient id="waterBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#DBEAFE"/>
+      <stop offset="50%" style="stop-color:#BFDBFE"/>
+      <stop offset="100%" style="stop-color:#DBEAFE"/>
+    </linearGradient>
+  </defs>
+  <!-- Outer rim -->
+  <ellipse cx="85" cy="40" rx="80" ry="35" fill="url(#tubWhite)" stroke="#E5E7EB" stroke-width="3"/>
+  <!-- Inner basin -->
+  <ellipse cx="85" cy="40" rx="70" ry="28" fill="url(#waterBlue)" stroke="#93C5FD" stroke-width="1"/>
+  <!-- Drain -->
+  <circle cx="130" cy="40" r="4" fill="#6B7280"/>
+  <!-- Faucet area -->
+  <rect x="15" y="30" width="15" height="20" rx="3" fill="#D4D4D8"/>
+  <circle cx="22" cy="35" r="4" fill="#A1A1AA"/>
+  <circle cx="22" cy="45" r="4" fill="#A1A1AA"/>
+</svg>

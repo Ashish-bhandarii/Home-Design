@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" width="200" height="60">
+  <!-- Bay Window - Architectural Floor Plan Symbol (projecting) -->
+  <defs>
+    <linearGradient id="bayGlass" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#DBEAFE"/>
+      <stop offset="50%" style="stop-color:#93C5FD"/>
+      <stop offset="100%" style="stop-color:#DBEAFE"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Wall base -->
+  <rect x="0" y="0" width="200" height="12" fill="#D4A574"/>
+  
+  <!-- Left angled panel -->
+  <polygon points="20,12 45,55 55,55 35,12" fill="#F5F5F4" stroke="#374151" stroke-width="1.5"/>
+  <polygon points="25,15 47,50 52,50 33,15" fill="url(#bayGlass)"/>
+  
+  <!-- Center panel (front) -->
+  <rect x="55" y="12" width="90" height="43" fill="#F5F5F4" stroke="#374151" stroke-width="1.5"/>
+  <rect x="60" y="17" width="80" height="33" fill="url(#bayGlass)"/>
+  <line x1="100" y1="17" x2="100" y2="50" stroke="#374151" stroke-width="1.5"/>
+  
+  <!-- Right angled panel -->
+  <polygon points="145,12 165,12 155,55 135,55" fill="#F5F5F4" stroke="#374151" stroke-width="1.5"/>
+  <polygon points="147,15 163,15 153,50 138,50" fill="url(#bayGlass)"/>
+  
+  <!-- Window sill projection outline -->
+  <path d="M 20 12 L 45 55 L 155 55 L 180 12" fill="none" stroke="#6B7280" stroke-width="1" stroke-dasharray="4,3"/>
+</svg>

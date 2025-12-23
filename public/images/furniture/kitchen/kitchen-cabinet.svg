@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" width="60" height="60">
+  <!-- Kitchen Cabinet - Top View Floor Plan -->
+  <!-- Cabinet body -->
+  <rect x="5" y="5" width="50" height="50" fill="#FAFAF9" stroke="#A8A29E" stroke-width="2"/>
+  <!-- Countertop edge -->
+  <rect x="3" y="3" width="54" height="54" fill="none" stroke="#78716C" stroke-width="1"/>
+  <!-- Door line -->
+  <line x1="30" y1="8" x2="30" y2="52" stroke="#D4D4D8" stroke-width="1"/>
+  <!-- Handles -->
+  <rect x="23" y="25" width="3" height="10" rx="1" fill="#9CA3AF"/>
+  <rect x="34" y="25" width="3" height="10" rx="1" fill="#9CA3AF"/>
+</svg>

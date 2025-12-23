@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15 25" width="15" height="25">
+  <!-- Wall Sconce - Top View Floor Plan -->
+  <!-- Wall mount plate -->
+  <rect x="2" y="2" width="11" height="21" rx="2" fill="#D4D4D8" stroke="#A1A1AA" stroke-width="1"/>
+  <!-- Light glow -->
+  <ellipse cx="7.5" cy="12.5" rx="4" ry="6" fill="#FEF3C7" opacity="0.7"/>
+  <!-- Glass shade -->
+  <ellipse cx="7.5" cy="12.5" rx="3" ry="5" fill="none" stroke="#9CA3AF" stroke-width="1"/>
+</svg>

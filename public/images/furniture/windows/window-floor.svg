@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 20" width="150" height="20">
+  <!-- Floor-to-Ceiling Window - Architectural Floor Plan Symbol -->
+  <defs>
+    <linearGradient id="floorGlass" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#CFFAFE"/>
+      <stop offset="50%" style="stop-color:#67E8F9"/>
+      <stop offset="100%" style="stop-color:#CFFAFE"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Wall thickness -->
+  <rect x="0" y="0" width="150" height="20" fill="#D4A574"/>
+  
+  <!-- Ultra-slim aluminum frame -->
+  <rect x="4" y="1" width="142" height="18" fill="#111827" rx="1"/>
+  
+  <!-- Full glass pane -->
+  <rect x="6" y="3" width="138" height="14" fill="url(#floorGlass)"/>
+  
+  <!-- Single thin mullion -->
+  <line x1="75" y1="1" x2="75" y2="19" stroke="#1F2937" stroke-width="2"/>
+  
+  <!-- Glass shine effect -->
+  <line x1="15" y1="8" x2="60" y2="8" stroke="#A5F3FC" stroke-width="2"/>
+  <line x1="90" y1="12" x2="135" y2="12" stroke="#A5F3FC" stroke-width="2"/>
+</svg>

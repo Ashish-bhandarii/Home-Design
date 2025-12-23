@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 45" width="180" height="45">
+  <!-- TV Unit - Top View Floor Plan -->
+  <defs>
+    <linearGradient id="tvUnitMatte" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#374151"/>
+      <stop offset="50%" style="stop-color:#1F2937"/>
+      <stop offset="100%" style="stop-color:#374151"/>
+    </linearGradient>
+  </defs>
+  <!-- Unit body -->
+  <rect x="5" y="5" width="170" height="35" rx="2" fill="url(#tvUnitMatte)" stroke="#111827" stroke-width="2"/>
+  <!-- Compartments -->
+  <rect x="10" y="10" width="50" height="25" fill="#111827" rx="1"/>
+  <rect x="65" y="10" width="50" height="25" fill="#111827" rx="1"/>
+  <rect x="120" y="10" width="50" height="25" fill="#111827" rx="1"/>
+  <!-- Handles -->
+  <rect x="30" y="20" width="10" height="3" rx="1" fill="#4B5563"/>
+  <rect x="85" y="20" width="10" height="3" rx="1" fill="#4B5563"/>
+  <rect x="140" y="20" width="10" height="3" rx="1" fill="#4B5563"/>
+</svg>

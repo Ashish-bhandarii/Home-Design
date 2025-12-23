@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 35 35" width="35" height="35">
+  <!-- Floor Lamp - Top View Floor Plan -->
+  <defs>
+    <radialGradient id="floorLampGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#FEF3C7"/>
+      <stop offset="100%" style="stop-color:#D4A574"/>
+    </radialGradient>
+  </defs>
+  <!-- Base (tripod feet) -->
+  <g stroke="#A67B5B" stroke-width="3" fill="none">
+    <line x1="17.5" y1="17.5" x2="5" y2="30"/>
+    <line x1="17.5" y1="17.5" x2="30" y2="30"/>
+    <line x1="17.5" y1="17.5" x2="17.5" y2="5"/>
+  </g>
+  <!-- Shade from above -->
+  <circle cx="17.5" cy="17.5" r="12" fill="url(#floorLampGlow)" stroke="#D4A574" stroke-width="1"/>
+  <!-- Center pole -->
+  <circle cx="17.5" cy="17.5" r="3" fill="#78350F"/>
+</svg>

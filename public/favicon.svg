@@ -1,0 +1,10 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <rect width="32" height="32" rx="8" fill="#1f2937"/>
+  
+  <!-- Home icon -->
+  <path d="M16 6L6 14V26H12V19H20V26H26V14L16 6Z" fill="white"/>
+  
+  <!-- Roof accent -->
+  <path d="M16 6L6 14H26L16 6Z" fill="#f97316"/>
+</svg>

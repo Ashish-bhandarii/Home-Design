@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25" width="25" height="25">
+  <!-- Small Indoor Plant - Top View Floor Plan -->
+  <!-- Terracotta pot -->
+  <circle cx="12.5" cy="12.5" r="10" fill="#C2410C" stroke="#9A3412" stroke-width="1.5"/>
+  <!-- Soil -->
+  <circle cx="12.5" cy="12.5" r="7" fill="#78350F"/>
+  <!-- Succulent rosette -->
+  <g fill="#4ADE80" stroke="#22C55E" stroke-width="0.5">
+    <ellipse cx="12.5" cy="8" rx="3" ry="4"/>
+    <ellipse cx="8" cy="12.5" rx="4" ry="3"/>
+    <ellipse cx="17" cy="12.5" rx="4" ry="3"/>
+    <ellipse cx="12.5" cy="17" rx="3" ry="4"/>
+  </g>
+  <circle cx="12.5" cy="12.5" r="2" fill="#86EFAC"/>
+</svg>

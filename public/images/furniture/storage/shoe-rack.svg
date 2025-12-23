@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 30" width="80" height="30">
+  <!-- Shoe Rack - Top View Floor Plan -->
+  <!-- Metal frame -->
+  <rect x="5" y="5" width="70" height="20" fill="none" stroke="#4B5563" stroke-width="2"/>
+  <!-- Shelves -->
+  <line x1="8" y1="12" x2="72" y2="12" stroke="#4B5563" stroke-width="1"/>
+  <line x1="8" y1="19" x2="72" y2="19" stroke="#4B5563" stroke-width="1"/>
+  <!-- Wood shelf surfaces -->
+  <rect x="8" y="7" width="64" height="4" fill="#A67B5B"/>
+  <rect x="8" y="13" width="64" height="5" fill="#A67B5B"/>
+  <rect x="8" y="20" width="64" height="4" fill="#A67B5B"/>
+</svg>

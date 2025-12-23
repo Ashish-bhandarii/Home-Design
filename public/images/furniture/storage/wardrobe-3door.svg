@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 60" width="150" height="60">
+  <!-- 3-Door Wardrobe - Top View Floor Plan -->
+  <defs>
+    <linearGradient id="wardrobeMirror" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#DBEAFE"/>
+      <stop offset="50%" style="stop-color:#BFDBFE"/>
+      <stop offset="100%" style="stop-color:#DBEAFE"/>
+    </linearGradient>
+  </defs>
+  <!-- Wardrobe body -->
+  <rect x="5" y="5" width="140" height="50" fill="#E7E5E4" stroke="#A8A29E" stroke-width="2"/>
+  <!-- Left door -->
+  <rect x="8" y="8" width="42" height="44" fill="#F5F5F4" stroke="#D4D4D8" stroke-width="1"/>
+  <!-- Middle mirror door -->
+  <rect x="54" y="8" width="42" height="44" fill="url(#wardrobeMirror)" stroke="#D4D4D8" stroke-width="1"/>
+  <!-- Right door -->
+  <rect x="100" y="8" width="42" height="44" fill="#F5F5F4" stroke="#D4D4D8" stroke-width="1"/>
+  <!-- Handles -->
+  <rect x="46" y="25" width="3" height="10" rx="1" fill="#9CA3AF"/>
+  <rect x="92" y="25" width="3" height="10" rx="1" fill="#9CA3AF"/>
+</svg>

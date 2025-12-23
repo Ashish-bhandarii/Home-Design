@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 5" width="80" height="5">
+  <!-- Wall Mirror - Top View Floor Plan (thin edge view) -->
+  <defs>
+    <linearGradient id="mirrorGlass" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#E0F2FE"/>
+      <stop offset="50%" style="stop-color:#BAE6FD"/>
+      <stop offset="100%" style="stop-color:#E0F2FE"/>
+    </linearGradient>
+  </defs>
+  <!-- Gold frame -->
+  <rect x="0" y="0" width="80" height="5" fill="#D4AF37" stroke="#B45309" stroke-width="0.5"/>
+  <!-- Mirror surface -->
+  <rect x="2" y="1" width="76" height="3" fill="url(#mirrorGlass)"/>
+</svg>

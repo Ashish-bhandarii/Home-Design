@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 80" width="150" height="80">
+  <!-- Kitchen Island - Top View Floor Plan -->
+  <defs>
+    <linearGradient id="quartzTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F5F5F4"/>
+      <stop offset="30%" style="stop-color:#E7E5E4"/>
+      <stop offset="70%" style="stop-color:#F5F5F4"/>
+      <stop offset="100%" style="stop-color:#D6D3D1"/>
+    </linearGradient>
+  </defs>
+  <!-- Island base -->
+  <rect x="5" y="5" width="140" height="70" rx="2" fill="url(#quartzTop)" stroke="#A8A29E" stroke-width="2"/>
+  <!-- Cabinet doors below -->
+  <rect x="10" y="55" width="40" height="15" fill="#F5F5F4" stroke="#D4D4D8" stroke-width="1"/>
+  <rect x="55" y="55" width="40" height="15" fill="#F5F5F4" stroke="#D4D4D8" stroke-width="1"/>
+  <rect x="100" y="55" width="40" height="15" fill="#F5F5F4" stroke="#D4D4D8" stroke-width="1"/>
+  <!-- Handles -->
+  <rect x="25" y="60" width="10" height="3" rx="1" fill="#9CA3AF"/>
+  <rect x="70" y="60" width="10" height="3" rx="1" fill="#9CA3AF"/>
+  <rect x="115" y="60" width="10" height="3" rx="1" fill="#9CA3AF"/>
+  <!-- Sink indication -->
+  <ellipse cx="75" cy="30" rx="25" ry="15" fill="none" stroke="#9CA3AF" stroke-width="2"/>
+  <circle cx="75" cy="30" r="4" fill="#6B7280"/>
+</svg>

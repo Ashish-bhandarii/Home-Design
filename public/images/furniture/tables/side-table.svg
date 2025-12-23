@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" width="50" height="50">
+  <!-- Side Table - Top View Floor Plan -->
+  <!-- Metal frame -->
+  <circle cx="25" cy="25" r="22" fill="none" stroke="#D97706" stroke-width="3"/>
+  <!-- Table top -->
+  <circle cx="25" cy="25" r="18" fill="#FBBF24" stroke="#D97706" stroke-width="1"/>
+  <!-- Center detail -->
+  <circle cx="25" cy="25" r="5" fill="#F59E0B"/>
+</svg>

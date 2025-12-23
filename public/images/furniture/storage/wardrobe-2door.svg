@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 60" width="100" height="60">
+  <!-- 2-Door Wardrobe - Top View Floor Plan -->
+  <defs>
+    <linearGradient id="wardrobeLam" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#F5F5F4"/>
+      <stop offset="50%" style="stop-color:#E7E5E4"/>
+      <stop offset="100%" style="stop-color:#F5F5F4"/>
+    </linearGradient>
+  </defs>
+  <!-- Wardrobe body -->
+  <rect x="5" y="5" width="90" height="50" fill="url(#wardrobeLam)" stroke="#A8A29E" stroke-width="2"/>
+  <!-- Door line -->
+  <line x1="50" y1="5" x2="50" y2="55" stroke="#A8A29E" stroke-width="2"/>
+  <!-- Handles -->
+  <rect x="42" y="25" width="3" height="10" rx="1" fill="#9CA3AF"/>
+  <rect x="55" y="25" width="3" height="10" rx="1" fill="#9CA3AF"/>
+</svg>

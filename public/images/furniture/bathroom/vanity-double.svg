@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 55" width="140" height="55">
+  <!-- Double Vanity - Top View Floor Plan -->
+  <defs>
+    <linearGradient id="marbleTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F5F5F4"/>
+      <stop offset="25%" style="stop-color:#E7E5E4"/>
+      <stop offset="50%" style="stop-color:#F9FAFB"/>
+      <stop offset="75%" style="stop-color:#E7E5E4"/>
+      <stop offset="100%" style="stop-color:#F5F5F4"/>
+    </linearGradient>
+  </defs>
+  <!-- Vanity body -->
+  <rect x="5" y="5" width="130" height="45" rx="2" fill="url(#marbleTop)" stroke="#A8A29E" stroke-width="2"/>
+  <!-- Left sink -->
+  <ellipse cx="40" cy="22" rx="18" ry="11" fill="#E5E7EB" stroke="#9CA3AF" stroke-width="1"/>
+  <circle cx="40" cy="22" r="2.5" fill="#6B7280"/>
+  <!-- Right sink -->
+  <ellipse cx="100" cy="22" rx="18" ry="11" fill="#E5E7EB" stroke="#9CA3AF" stroke-width="1"/>
+  <circle cx="100" cy="22" r="2.5" fill="#6B7280"/>
+  <!-- Faucets -->
+  <rect x="37" y="8" width="6" height="6" rx="1" fill="#D4D4D8"/>
+  <rect x="97" y="8" width="6" height="6" rx="1" fill="#D4D4D8"/>
+  <!-- Cabinets -->
+  <rect x="8" y="38" width="38" height="8" fill="#F5F5F4" stroke="#D4D4D8" stroke-width="1"/>
+  <rect x="51" y="38" width="38" height="8" fill="#F5F5F4" stroke="#D4D4D8" stroke-width="1"/>
+  <rect x="94" y="38" width="38" height="8" fill="#F5F5F4" stroke="#D4D4D8" stroke-width="1"/>
+</svg>

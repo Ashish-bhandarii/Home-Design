@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 65 65" width="65" height="65">
+  <!-- Office Chair - Top View Floor Plan -->
+  <!-- Base star -->
+  <g fill="#374151" stroke="#1F2937" stroke-width="1">
+    <rect x="28" y="2" width="9" height="25" rx="2" transform="rotate(0 32.5 32.5)"/>
+    <rect x="28" y="2" width="9" height="25" rx="2" transform="rotate(72 32.5 32.5)"/>
+    <rect x="28" y="2" width="9" height="25" rx="2" transform="rotate(144 32.5 32.5)"/>
+    <rect x="28" y="2" width="9" height="25" rx="2" transform="rotate(216 32.5 32.5)"/>
+    <rect x="28" y="2" width="9" height="25" rx="2" transform="rotate(288 32.5 32.5)"/>
+  </g>
+  <!-- Seat -->
+  <ellipse cx="32.5" cy="32.5" rx="22" ry="20" fill="#1F2937" stroke="#111827" stroke-width="2"/>
+  <!-- Backrest -->
+  <ellipse cx="32.5" cy="18" rx="18" ry="8" fill="#374151" stroke="#1F2937" stroke-width="1"/>
+  <!-- Armrests -->
+  <rect x="6" y="25" width="8" height="18" rx="2" fill="#4B5563"/>
+  <rect x="51" y="25" width="8" height="18" rx="2" fill="#4B5563"/>
+</svg>
