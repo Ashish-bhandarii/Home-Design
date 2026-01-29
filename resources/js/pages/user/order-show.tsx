@@ -69,6 +69,8 @@ export default function OrderShow({ order }: Props) {
         
         setCancelling(true);
         router.post(`/orders/${order.id}/cancel`, {}, {
+            preserveScroll: true,
+            preserveState: false,
             onFinish: () => setCancelling(false),
         });
     };

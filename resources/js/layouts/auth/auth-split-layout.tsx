@@ -17,9 +17,9 @@ export default function AuthSplitLayout({
     const { name, quote } = usePage<SharedData>().props;
 
     return (
-        <div className="flex min-h-screen">
-            {/* Left Side - Decorative Panel */}
-            <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-orange-500 via-pink-500 to-purple-600">
+        <div className="flex h-[100svh] overflow-hidden">
+            {/* Left Side - Decorative Panel (neutralized) */}
+            <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-zinc-900">
                 {/* Animated Background Pattern */}
                 <div className="absolute inset-0 opacity-20">
                     <div className="absolute inset-0" style={{
@@ -33,7 +33,7 @@ export default function AuthSplitLayout({
                 <div className="absolute top-1/2 left-1/4 w-16 h-16 bg-white/10 rounded-full blur-lg animate-pulse" style={{ animationDelay: '2s' }} />
                 
                 {/* Content */}
-                <div className="relative z-10 flex flex-col justify-center items-center w-full p-12 text-white">
+                <div className="relative z-10 flex h-full flex-col justify-center items-center w-full px-12 py-10 text-white">
                     <div className="max-w-md text-center">
                         {/* Logo */}
                         <div className="mb-8 flex justify-center">
@@ -43,15 +43,15 @@ export default function AuthSplitLayout({
                         </div>
                         
                         {/* Heading */}
-                        <h1 className="text-4xl font-bold mb-4">
+                        <h1 className="text-3xl xl:text-4xl font-bold mb-4">
                             Design Your Dream Home
                         </h1>
-                        <p className="text-lg text-white/80 mb-8">
+                        <p className="text-base xl:text-lg text-white/80 mb-8 [@media(max-height:820px)]:mb-5">
                             Transform your living space with our intuitive design tools and vast collection of furniture and materials.
                         </p>
                         
                         {/* Features */}
-                        <div className="space-y-4 text-left">
+                        <div className="space-y-4 text-left [@media(max-height:820px)]:hidden">
                             <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl p-4">
                                 <div className="flex-shrink-0 w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,34 +99,36 @@ export default function AuthSplitLayout({
             </div>
 
             {/* Right Side - Form */}
-            <div className="flex-1 flex flex-col justify-center px-4 py-12 sm:px-6 lg:px-20 xl:px-24 bg-white dark:bg-zinc-950">
-                <div className="mx-auto w-full max-w-sm">
-                    {/* Mobile Logo */}
-                    <div className="lg:hidden mb-8">
-                        <Link
-                            href={home()}
-                            className="flex items-center justify-center gap-2 text-lg font-semibold"
-                        >
-                            <AppLogoIcon className="h-10 w-10 text-orange-500" />
-                            <span className="bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 bg-clip-text text-xl font-bold text-transparent">
-                                {name}
-                            </span>
-                        </Link>
-                    </div>
+            <div className="flex-1 flex flex-col bg-white dark:bg-zinc-950 overflow-y-auto">
+                <div className="flex flex-1 flex-col justify-center px-4 py-6 sm:px-6 sm:py-8 lg:px-20 lg:py-10 xl:px-24">
+                    <div className="mx-auto w-full max-w-sm">
+                        {/* Mobile Logo */}
+                        <div className="lg:hidden mb-5">
+                            <Link
+                                href={home()}
+                                className="flex items-center justify-center gap-2 text-lg font-semibold"
+                            >
+                                <AppLogoIcon className="h-10 w-10 text-zinc-900 dark:text-white" />
+                                <span className="text-xl font-bold text-zinc-900 dark:text-white">
+                                    {name}
+                                </span>
+                            </Link>
+                        </div>
 
-                    {/* Form Header */}
-                    <div className="text-center lg:text-left mb-8">
-                        <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-3xl">
-                            {title}
-                        </h2>
-                        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                            {description}
-                        </p>
-                    </div>
+                        {/* Form Header */}
+                        <div className="text-center lg:text-left mb-5">
+                            <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-3xl">
+                                {title}
+                            </h2>
+                            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                                {description}
+                            </p>
+                        </div>
 
-                    {/* Form Content */}
-                    <div className="space-y-6">
-                        {children}
+                        {/* Form Content */}
+                        <div className="space-y-4">
+                            {children}
+                        </div>
                     </div>
                 </div>
             </div>

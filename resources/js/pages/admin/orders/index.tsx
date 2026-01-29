@@ -88,6 +88,8 @@ export default function AdminOrders({ orders, statusCounts, filters }: Props) {
         if (!confirm('Are you sure you want to delete this order? This action cannot be undone.')) return;
         setDeleting(orderId);
         router.delete(`/admin/orders/${orderId}`, {
+            preserveScroll: true,
+            preserveState: false,
             onFinish: () => setDeleting(null),
         });
     };

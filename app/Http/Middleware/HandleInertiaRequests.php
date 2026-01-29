@@ -53,6 +53,8 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'siteSettings' => SiteSetting::allSettings(),
+            // Always provide fresh CSRF token
+            'csrf_token' => csrf_token(),
         ];
     }
 }

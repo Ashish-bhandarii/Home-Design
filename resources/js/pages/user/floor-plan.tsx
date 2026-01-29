@@ -1,7 +1,10 @@
 import { Head, Link } from '@inertiajs/react';
+import { OrbitControls, PerspectiveCamera, Text } from '@react-three/drei';
+import { Canvas } from '@react-three/fiber';
 import axios from 'axios';
-import { BedDouble, Building2, Check, ChevronDown, ChevronLeft, ChevronRight, Copy, Download, FolderOpen, Home, Pencil, RefreshCw, Save, Sofa, Sparkles, Trash2, X } from 'lucide-react';
+import { BedDouble, Box, Building2, Check, ChevronDown, ChevronLeft, ChevronRight, Copy, Download, FolderOpen, Grid2X2, Home, Pencil, RefreshCw, Save, Sofa, Sparkles, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import * as THREE from 'three';
 
 // Types
 interface FloorPlanProject {
@@ -174,6 +177,9 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
     // Style affects room padding - spacious has more breathing room
     const roomPadding = style === 'spacious' ? 0.15 : 0.05;
     
+    // Door width constant for proper placement (standard single door ~80cm)
+    const doorWidth = 0.8;
+    
     // Calculate zones based on variant
     // Private zone (bedrooms + bathrooms) vs Public zone (living, kitchen, etc.)
     let privateZoneRatio: number;
@@ -214,9 +220,13 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                 const y = wall + roomPadding / 2;
                 const h = privateZoneH - roomPadding;
                 
-                // Door position: facing corridor (bottom of bedroom)
-                // Door placed near corner but not exactly at corner (more realistic)
-                const doorX = x + actualBedW * 0.25;
+                // Door position: facing corridor (bottom wall of bedroom)
+                // Place door 20% from left edge, ensuring it doesn't overlap corners
+                // Door x is the hinge position
+                const doorOffset = Math.max(0.3, actualBedW * 0.2);
+                const doorX = idx % 2 === 0 
+                    ? x + doorOffset  // Left side placement for even rooms
+                    : x + actualBedW - doorOffset - doorWidth; // Right side for odd rooms
                 const doorY = y + h;
                 
                 rooms.push({
@@ -246,7 +256,8 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                         y: ensuiteY,
                         w: ensuiteW - roomPadding / 2,
                         h: ensuiteH,
-                        doors: [{ x: ensuiteX, y: ensuiteY + ensuiteH * 0.7, direction: 'left', swing: 'ccw' }],
+                        // Ensuite door centered vertically, opens into bedroom
+                        doors: [{ x: ensuiteX, y: ensuiteY + (ensuiteH - doorWidth) / 2, direction: 'left', swing: 'ccw' }],
                     });
                 }
             });
@@ -259,8 +270,11 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
             req.bathrooms.forEach((bath, idx) => {
                 const x = wall + bedroomAreaW + roomPadding / 2;
                 const y = wall + idx * bathH + roomPadding / 2;
+                const bathRoomH = bathH - roomPadding;
                 
-                // Bathroom door faces corridor (not directly visible from living area)
+                // Bathroom door faces corridor, centered on wall
+                const doorY = y + (bathRoomH - doorWidth) / 2;
+                
                 rooms.push({
                     id: bath.id,
                     type: 'bathroom',
@@ -268,8 +282,8 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                     x,
                     y,
                     w: bathroomAreaW - roomPadding,
-                    h: bathH - roomPadding,
-                    doors: [{ x: x, y: y + (bathH - roomPadding) * 0.5, direction: 'left', swing: 'cw' }],
+                    h: bathRoomH,
+                    doors: [{ x: x, y: doorY, direction: 'left', swing: idx % 2 === 0 ? 'cw' : 'ccw' }],
                 });
             });
         }
@@ -298,8 +312,11 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                 const w = commonW - roomPadding;
                 const h = publicZoneH - roomPadding;
                 
-                // Door from corridor into room
-                const doorX = x + w * 0.5;
+                // Door from corridor into room - offset from center for variety
+                const doorOffset = idx % 2 === 0 
+                    ? w * 0.3  // Offset to left for even rooms
+                    : w * 0.7 - doorWidth; // Offset to right for odd rooms
+                const doorX = x + doorOffset;
                 const doorY = y;
                 
                 rooms.push({
@@ -336,8 +353,10 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                 const w = bedroomZoneW - corridorW - roomPadding;
                 
                 // Door facing corridor (on right side of bedroom)
+                // Position door properly along the wall
+                const doorOffset = Math.max(0.3, actualBedH * 0.25);
                 const doorX = x + w;
-                const doorY = y + actualBedH * 0.3;
+                const doorY = y + doorOffset;
                 
                 rooms.push({
                     id: bed.id,
@@ -353,6 +372,7 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
 
                 // Ensuite below bedroom
                 if (hasEnsuite) {
+                    const ensuiteRealH = ensuiteH - roomPadding / 2;
                     rooms.push({
                         id: `${bed.id}-ensuite`,
                         type: 'ensuite',
@@ -360,8 +380,8 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                         x,
                         y: y + actualBedH,
                         w: w * 0.6,
-                        h: ensuiteH - roomPadding / 2,
-                        doors: [{ x: x + w * 0.3, y: y + actualBedH, direction: 'up', swing: 'ccw' }],
+                        h: ensuiteRealH,
+                        doors: [{ x: x + w * 0.6, y: y + actualBedH + (ensuiteRealH - doorWidth) / 2, direction: 'right', swing: 'ccw' }],
                     });
                 }
             });
@@ -387,6 +407,11 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
             req.bathrooms.forEach((bath, idx) => {
                 const x = wall + bedroomZoneW + idx * bathW + roomPadding / 2;
                 const y = wall + roomPadding / 2;
+                const bathRoomW = bathW - roomPadding;
+                const bathRoomH = bathAreaH - roomPadding;
+                
+                // Door centered on left wall
+                const doorY = y + (bathRoomH - doorWidth) / 2;
                 
                 rooms.push({
                     id: bath.id,
@@ -394,9 +419,9 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                     label: bath.name,
                     x,
                     y,
-                    w: bathW - roomPadding,
-                    h: bathAreaH - roomPadding,
-                    doors: [{ x: x, y: y + (bathAreaH - roomPadding) * 0.5, direction: 'left', swing: 'cw' }],
+                    w: bathRoomW,
+                    h: bathRoomH,
+                    doors: [{ x: x, y: doorY, direction: 'left', swing: idx % 2 === 0 ? 'cw' : 'ccw' }],
                 });
             });
         }
@@ -443,6 +468,9 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
             const w = masterZoneW - corridorW - roomPadding;
             const h = innerH - ensuiteH - roomPadding;
             
+            // Door on right wall, offset from top
+            const doorOffset = Math.max(0.3, h * 0.25);
+            
             rooms.push({
                 id: masterBed.id,
                 type: 'bedroom',
@@ -451,20 +479,24 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                 y,
                 w,
                 h,
-                doors: [{ x: x + w, y: y + h * 0.4, direction: 'right', swing: 'cw' }],
+                doors: [{ x: x + w, y: y + doorOffset, direction: 'right', swing: 'cw' }],
                 hasEnsuite,
             });
 
             if (hasEnsuite) {
+                // Ensuite door centered on top wall
+                const ensuiteW = w * 0.7;
+                const ensuiteDoorX = x + (ensuiteW - doorWidth) / 2;
+                
                 rooms.push({
                     id: `${masterBed.id}-ensuite`,
                     type: 'ensuite',
                     label: 'Master\nEnsuite',
                     x,
                     y: y + h,
-                    w: w * 0.7,
+                    w: ensuiteW,
                     h: ensuiteH - roomPadding / 2,
-                    doors: [{ x: x + w * 0.35, y: y + h, direction: 'up', swing: 'ccw' }],
+                    doors: [{ x: ensuiteDoorX, y: y + h, direction: 'up', swing: 'ccw' }],
                 });
             }
         }
@@ -483,6 +515,9 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                 const w = secondaryZoneW - ensuiteW - roomPadding;
                 const h = bedH - roomPadding;
                 
+                // Door on left wall, offset from top
+                const doorOffset = Math.max(0.3, h * 0.25);
+                
                 rooms.push({
                     id: bed.id,
                     type: 'bedroom',
@@ -491,11 +526,15 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                     y,
                     w,
                     h,
-                    doors: [{ x: x, y: y + h * 0.4, direction: 'left', swing: idx % 2 === 0 ? 'cw' : 'ccw' }],
+                    doors: [{ x: x, y: y + doorOffset, direction: 'left', swing: idx % 2 === 0 ? 'cw' : 'ccw' }],
                     hasEnsuite,
                 });
 
                 if (hasEnsuite) {
+                    // Ensuite door centered on left wall
+                    const ensuiteH = h * 0.6;
+                    const ensuiteDoorY = y + (ensuiteH - doorWidth) / 2;
+                    
                     rooms.push({
                         id: `${bed.id}-ensuite`,
                         type: 'ensuite',
@@ -503,8 +542,8 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                         x: x + w,
                         y,
                         w: ensuiteW - roomPadding / 2,
-                        h: h * 0.6,
-                        doors: [{ x: x + w, y: y + h * 0.3, direction: 'left', swing: 'ccw' }],
+                        h: ensuiteH,
+                        doors: [{ x: x + w, y: ensuiteDoorY, direction: 'left', swing: 'ccw' }],
                     });
                 }
             });
@@ -518,6 +557,11 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
             req.bathrooms.forEach((bath, idx) => {
                 const x = wall + masterZoneW + idx * bathW + roomPadding / 2;
                 const y = wall + roomPadding / 2;
+                const actualBathW = bathW - roomPadding;
+                const actualBathH = bathAreaH - roomPadding;
+                
+                // Door centered on bottom wall
+                const doorX = x + (actualBathW - doorWidth) / 2;
                 
                 rooms.push({
                     id: bath.id,
@@ -525,9 +569,9 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                     label: bath.name,
                     x,
                     y,
-                    w: bathW - roomPadding,
-                    h: bathAreaH - roomPadding,
-                    doors: [{ x: x + (bathW - roomPadding) * 0.5, y: y + bathAreaH - roomPadding, direction: 'down', swing: 'cw' }],
+                    w: actualBathW,
+                    h: actualBathH,
+                    doors: [{ x: doorX, y: y + actualBathH, direction: 'down', swing: 'cw' }],
                 });
             });
         }
@@ -541,6 +585,10 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
             req.commonAreas.forEach((room, idx) => {
                 const x = wall + masterZoneW + roomPadding / 2;
                 const y = commonStartY + idx * commonH + roomPadding / 2;
+                const actualCommonW = centralZoneW - roomPadding;
+                
+                // Door centered on top wall
+                const doorX = x + (actualCommonW - doorWidth) / 2;
                 
                 rooms.push({
                     id: room.id,
@@ -548,9 +596,9 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                     label: room.name,
                     x,
                     y,
-                    w: centralZoneW - roomPadding,
+                    w: actualCommonW,
                     h: commonH - roomPadding,
-                    doors: [{ x: x + (centralZoneW - roomPadding) * 0.5, y: y, direction: 'up', swing: idx % 2 === 0 ? 'cw' : 'ccw' }],
+                    doors: [{ x: doorX, y: y, direction: 'up', swing: idx % 2 === 0 ? 'cw' : 'ccw' }],
                 });
             });
         }
@@ -566,63 +614,118 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
 
 // SVG Components
 
+// Professional floor plan door component with frame, panel, and swing arc
 const DoorSwing = ({ x, y, direction, swing = 'cw' }: { x: number; y: number; direction: string; swing?: string }) => {
-    const size = 0.6; // Door width ~60cm
-    const strokeW = 0.06;
-
-    let arcPath = '';
-    let doorLine = { x1: x, y1: y, x2: x, y2: y };
-
+    const doorWidth = 0.8; // Door width ~80cm (standard single door)
+    const doorThickness = 0.05; // Door panel thickness
+    const frameWidth = 0.06; // Door frame width
+    
+    // Calculate door geometry based on direction and swing
+    // The door hinge is at (x, y), door swings from there
+    let transform = '';
+    let hingeX = x;
+    let hingeY = y;
+    
+    // Rotation angles for different wall orientations
+    // direction: which way the door opens (into which side)
+    // 'down' = door on top wall, opens downward into room
+    // 'up' = door on bottom wall, opens upward into room
+    // 'left' = door on right wall, opens leftward into room
+    // 'right' = door on left wall, opens rightward into room
+    
     if (direction === 'down') {
-        if (swing === 'cw') {
-            arcPath = `M ${x} ${y} A ${size} ${size} 0 0 1 ${x + size} ${y + size}`;
-            doorLine = { x1: x, y1: y, x2: x + size, y2: y + size };
-        } else {
-            arcPath = `M ${x} ${y} A ${size} ${size} 0 0 0 ${x - size} ${y + size}`;
-            doorLine = { x1: x, y1: y, x2: x - size, y2: y + size };
-        }
-    } else if (direction === 'left') {
-        if (swing === 'cw') {
-            arcPath = `M ${x} ${y} A ${size} ${size} 0 0 0 ${x - size} ${y + size}`;
-            doorLine = { x1: x, y1: y, x2: x - size, y2: y + size };
-        } else {
-            arcPath = `M ${x} ${y} A ${size} ${size} 0 0 1 ${x - size} ${y - size}`;
-            doorLine = { x1: x, y1: y, x2: x - size, y2: y - size };
-        }
-    } else if (direction === 'right') {
-        if (swing === 'cw') {
-            arcPath = `M ${x} ${y} A ${size} ${size} 0 0 0 ${x + size} ${y + size}`;
-            doorLine = { x1: x, y1: y, x2: x + size, y2: y + size };
-        } else {
-            arcPath = `M ${x} ${y} A ${size} ${size} 0 0 1 ${x + size} ${y - size}`;
-            doorLine = { x1: x, y1: y, x2: x + size, y2: y - size };
+        // Door on horizontal wall, opens downward
+        transform = `translate(${x}, ${y})`;
+        if (swing === 'ccw') {
+            transform = `translate(${x + doorWidth}, ${y}) scale(-1, 1)`;
         }
     } else if (direction === 'up') {
-        if (swing === 'cw') {
-            arcPath = `M ${x} ${y} A ${size} ${size} 0 0 1 ${x - size} ${y - size}`;
-            doorLine = { x1: x, y1: y, x2: x - size, y2: y - size };
-        } else {
-            arcPath = `M ${x} ${y} A ${size} ${size} 0 0 0 ${x + size} ${y - size}`;
-            doorLine = { x1: x, y1: y, x2: x + size, y2: y - size };
+        // Door on horizontal wall, opens upward
+        transform = `translate(${x}, ${y}) scale(1, -1)`;
+        if (swing === 'ccw') {
+            transform = `translate(${x + doorWidth}, ${y}) scale(-1, -1)`;
+        }
+    } else if (direction === 'left') {
+        // Door on vertical wall, opens leftward
+        transform = `translate(${x}, ${y}) rotate(-90)`;
+        if (swing === 'ccw') {
+            transform = `translate(${x}, ${y + doorWidth}) rotate(-90) scale(1, -1)`;
+        }
+    } else if (direction === 'right') {
+        // Door on vertical wall, opens rightward
+        transform = `translate(${x}, ${y}) rotate(90) scale(1, -1)`;
+        if (swing === 'ccw') {
+            transform = `translate(${x}, ${y + doorWidth}) rotate(90)`;
         }
     }
 
     return (
-        <g>
-            {/* Door swing arc */}
-            <path d={arcPath} fill="none" stroke="#6b7280" strokeWidth={strokeW} strokeLinecap="round" strokeDasharray="0.1 0.05" />
-            {/* Door panel (solid line) */}
-            <line
-                x1={doorLine.x1}
-                y1={doorLine.y1}
-                x2={doorLine.x2}
-                y2={doorLine.y2}
-                stroke="#1f2937"
-                strokeWidth={0.08}
-                strokeLinecap="round"
+        <g transform={transform}>
+            {/* Wall opening gap - white background */}
+            <rect
+                x={-frameWidth}
+                y={-0.06}
+                width={doorWidth + frameWidth * 2}
+                height={0.12}
+                fill="white"
             />
-            {/* Door hinge point */}
-            <circle cx={x} cy={y} r="0.05" fill="#1f2937" />
+            
+            {/* Door frame - left jamb */}
+            <rect
+                x={-frameWidth}
+                y={-0.04}
+                width={frameWidth}
+                height={0.08}
+                fill="#d4d4d4"
+                stroke="#737373"
+                strokeWidth={0.01}
+            />
+            
+            {/* Door frame - right jamb */}
+            <rect
+                x={doorWidth}
+                y={-0.04}
+                width={frameWidth}
+                height={0.08}
+                fill="#d4d4d4"
+                stroke="#737373"
+                strokeWidth={0.01}
+            />
+            
+            {/* Door swing arc (90 degree arc) */}
+            <path
+                d={`M 0 0 A ${doorWidth} ${doorWidth} 0 0 1 ${doorWidth} ${doorWidth}`}
+                fill="none"
+                stroke="#94a3b8"
+                strokeWidth={0.02}
+                strokeDasharray="0.08 0.04"
+            />
+            
+            {/* Door panel in open position (at 90 degrees) */}
+            <rect
+                x={-doorThickness / 2}
+                y={0}
+                width={doorThickness}
+                height={doorWidth}
+                fill="#b45309"
+                stroke="#92400e"
+                strokeWidth={0.01}
+                rx={0.01}
+            />
+            
+            {/* Door handle */}
+            <circle
+                cx={0}
+                cy={doorWidth * 0.85}
+                r={0.03}
+                fill="#fbbf24"
+                stroke="#d97706"
+                strokeWidth={0.005}
+            />
+            
+            {/* Hinge indicators */}
+            <rect x={-0.02} y={0.08} width={0.04} height={0.04} fill="#525252" rx={0.005} />
+            <rect x={-0.02} y={doorWidth - 0.12} width={0.04} height={0.04} fill="#525252" rx={0.005} />
         </g>
     );
 };
@@ -742,6 +845,287 @@ const FloorPlanSVG = ({ plan }: { plan: FloorPlanResult }) => {
     );
 };
 
+// 3D Floor Plan Components
+
+// Room colors for 3D view
+const getRoomColor3D = (type: string): string => {
+    switch (type) {
+        case 'bedroom':
+            return '#fef3c7'; // Warm yellow
+        case 'bathroom':
+            return '#dbeafe'; // Light blue
+        case 'ensuite':
+            return '#e0f2fe'; // Cyan
+        case 'corridor':
+            return '#f5f5f4'; // Light gray
+        case 'common':
+            return '#dcfce7'; // Light green
+        default:
+            return '#ffffff';
+    }
+};
+
+// Wall component for 3D
+const Wall3D = ({ 
+    position, 
+    size, 
+    rotation = [0, 0, 0],
+    hasDoor = false,
+    doorPosition = 0.5 
+}: { 
+    position: [number, number, number]; 
+    size: [number, number, number];
+    rotation?: [number, number, number];
+    hasDoor?: boolean;
+    doorPosition?: number;
+}) => {
+    const wallColor = '#e5e7eb';
+    const wallHeight = size[1];
+    const wallWidth = size[0];
+    const wallDepth = size[2];
+    const doorWidth = 0.8;
+    const doorHeight = 2.1;
+
+    if (hasDoor && wallWidth > doorWidth * 1.5) {
+        // Create wall with door opening
+        const leftWallWidth = doorPosition * wallWidth - doorWidth / 2;
+        const rightWallWidth = wallWidth - (doorPosition * wallWidth + doorWidth / 2);
+        const topWallHeight = wallHeight - doorHeight;
+
+        return (
+            <group position={position} rotation={rotation as unknown as THREE.Euler}>
+                {/* Left wall section */}
+                {leftWallWidth > 0.05 && (
+                    <mesh position={[-wallWidth / 2 + leftWallWidth / 2, 0, 0]}>
+                        <boxGeometry args={[leftWallWidth, wallHeight, wallDepth]} />
+                        <meshStandardMaterial color={wallColor} />
+                    </mesh>
+                )}
+                {/* Right wall section */}
+                {rightWallWidth > 0.05 && (
+                    <mesh position={[wallWidth / 2 - rightWallWidth / 2, 0, 0]}>
+                        <boxGeometry args={[rightWallWidth, wallHeight, wallDepth]} />
+                        <meshStandardMaterial color={wallColor} />
+                    </mesh>
+                )}
+                {/* Top section above door */}
+                {topWallHeight > 0.05 && (
+                    <mesh position={[doorPosition * wallWidth - wallWidth / 2, wallHeight / 2 - topWallHeight / 2, 0]}>
+                        <boxGeometry args={[doorWidth + 0.1, topWallHeight, wallDepth]} />
+                        <meshStandardMaterial color={wallColor} />
+                    </mesh>
+                )}
+                {/* Door frame */}
+                <mesh position={[doorPosition * wallWidth - wallWidth / 2, -wallHeight / 2 + doorHeight / 2, 0]}>
+                    <boxGeometry args={[doorWidth + 0.08, doorHeight + 0.04, wallDepth + 0.02]} />
+                    <meshStandardMaterial color="#78350f" />
+                </mesh>
+                {/* Door panel (slightly open) */}
+                <mesh 
+                    position={[doorPosition * wallWidth - wallWidth / 2 - doorWidth / 2 + 0.02, -wallHeight / 2 + doorHeight / 2, wallDepth / 2 + 0.02]}
+                    rotation={[0, -Math.PI / 6, 0]}
+                >
+                    <boxGeometry args={[doorWidth - 0.05, doorHeight - 0.1, 0.04]} />
+                    <meshStandardMaterial color="#92400e" />
+                </mesh>
+            </group>
+        );
+    }
+
+    return (
+        <mesh position={position} rotation={rotation as unknown as THREE.Euler}>
+            <boxGeometry args={size} />
+            <meshStandardMaterial color={wallColor} />
+        </mesh>
+    );
+};
+
+// Room 3D component
+const Room3D = ({ room, wallHeight = 2.8 }: { room: Room; wallHeight?: number }) => {
+    const wallThickness = 0.15;
+    const floorColor = getRoomColor3D(room.type);
+
+    // Calculate center position (convert from top-left to center)
+    const centerX = room.x + room.w / 2;
+    const centerZ = room.y + room.h / 2;
+
+    // Check which walls have doors
+    const getDoorInfo = (wallSide: 'left' | 'right' | 'top' | 'bottom') => {
+        const door = room.doors.find(d => {
+            if (wallSide === 'bottom' && d.direction === 'down') return true;
+            if (wallSide === 'top' && d.direction === 'up') return true;
+            if (wallSide === 'left' && d.direction === 'left') return true;
+            if (wallSide === 'right' && d.direction === 'right') return true;
+            return false;
+        });
+        
+        if (!door) return { hasDoor: false, doorPosition: 0.5 };
+        
+        // Calculate door position along the wall (0-1)
+        let doorPos = 0.5;
+        if (wallSide === 'left' || wallSide === 'right') {
+            doorPos = (door.y - room.y) / room.h;
+        } else {
+            doorPos = (door.x - room.x) / room.w;
+        }
+        return { hasDoor: true, doorPosition: Math.max(0.15, Math.min(0.85, doorPos + 0.4)) };
+    };
+
+    const bottomDoor = getDoorInfo('bottom');
+    const topDoor = getDoorInfo('top');
+    const leftDoor = getDoorInfo('left');
+    const rightDoor = getDoorInfo('right');
+
+    return (
+        <group>
+            {/* Floor */}
+            <mesh position={[centerX, 0.01, centerZ]} rotation={[-Math.PI / 2, 0, 0]}>
+                <planeGeometry args={[room.w - wallThickness, room.h - wallThickness]} />
+                <meshStandardMaterial color={floorColor} side={THREE.DoubleSide} />
+            </mesh>
+
+            {/* Room label on floor */}
+            <Text
+                position={[centerX, 0.02, centerZ]}
+                rotation={[-Math.PI / 2, 0, 0]}
+                fontSize={Math.min(room.w, room.h) * 0.12}
+                color="#374151"
+                anchorX="center"
+                anchorY="middle"
+                maxWidth={room.w * 0.8}
+            >
+                {room.label.replace('\n', ' ')}
+            </Text>
+
+            {/* Front wall (bottom in 2D = +Z in 3D) */}
+            <Wall3D
+                position={[centerX, wallHeight / 2, room.y + room.h - wallThickness / 2]}
+                size={[room.w, wallHeight, wallThickness]}
+                hasDoor={bottomDoor.hasDoor}
+                doorPosition={bottomDoor.doorPosition}
+            />
+
+            {/* Back wall (top in 2D = -Z in 3D) */}
+            <Wall3D
+                position={[centerX, wallHeight / 2, room.y + wallThickness / 2]}
+                size={[room.w, wallHeight, wallThickness]}
+                hasDoor={topDoor.hasDoor}
+                doorPosition={topDoor.doorPosition}
+            />
+
+            {/* Left wall */}
+            <Wall3D
+                position={[room.x + wallThickness / 2, wallHeight / 2, centerZ]}
+                size={[room.h, wallHeight, wallThickness]}
+                rotation={[0, Math.PI / 2, 0]}
+                hasDoor={leftDoor.hasDoor}
+                doorPosition={leftDoor.doorPosition}
+            />
+
+            {/* Right wall */}
+            <Wall3D
+                position={[room.x + room.w - wallThickness / 2, wallHeight / 2, centerZ]}
+                size={[room.h, wallHeight, wallThickness]}
+                rotation={[0, Math.PI / 2, 0]}
+                hasDoor={rightDoor.hasDoor}
+                doorPosition={rightDoor.doorPosition}
+            />
+        </group>
+    );
+};
+
+// Main 3D Floor Plan Scene
+const FloorPlan3DScene = ({ plan }: { plan: FloorPlanResult }) => {
+    const { width, height, rooms, wallThickness } = plan;
+    const centerX = width / 2;
+    const centerZ = height / 2;
+
+    return (
+        <>
+            {/* Lighting */}
+            <ambientLight intensity={0.6} />
+            <directionalLight
+                position={[width, 15, height]}
+                intensity={1}
+                castShadow
+                shadow-mapSize-width={2048}
+                shadow-mapSize-height={2048}
+            />
+            <directionalLight position={[-width, 10, -height]} intensity={0.4} />
+
+            {/* Ground plane */}
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[centerX, -0.01, centerZ]} receiveShadow>
+                <planeGeometry args={[width + 4, height + 4]} />
+                <meshStandardMaterial color="#d1d5db" />
+            </mesh>
+
+            {/* Outer walls foundation */}
+            <mesh position={[centerX, 0.05, centerZ]}>
+                <boxGeometry args={[width, 0.1, height]} />
+                <meshStandardMaterial color="#9ca3af" />
+            </mesh>
+
+            {/* Outer boundary walls */}
+            {/* Front wall */}
+            <mesh position={[centerX, 1.4, height - wallThickness / 2]}>
+                <boxGeometry args={[width, 2.8, wallThickness]} />
+                <meshStandardMaterial color="#d1d5db" />
+            </mesh>
+            {/* Back wall */}
+            <mesh position={[centerX, 1.4, wallThickness / 2]}>
+                <boxGeometry args={[width, 2.8, wallThickness]} />
+                <meshStandardMaterial color="#d1d5db" />
+            </mesh>
+            {/* Left wall */}
+            <mesh position={[wallThickness / 2, 1.4, centerZ]}>
+                <boxGeometry args={[wallThickness, 2.8, height]} />
+                <meshStandardMaterial color="#d1d5db" />
+            </mesh>
+            {/* Right wall */}
+            <mesh position={[width - wallThickness / 2, 1.4, centerZ]}>
+                <boxGeometry args={[wallThickness, 2.8, height]} />
+                <meshStandardMaterial color="#d1d5db" />
+            </mesh>
+
+            {/* Render rooms */}
+            {rooms.map((room) => (
+                <Room3D key={room.id} room={room} />
+            ))}
+        </>
+    );
+};
+
+// 3D Floor Plan Viewer Component
+const FloorPlan3D = ({ plan }: { plan: FloorPlanResult }) => {
+    const { width, height } = plan;
+    const cameraDistance = Math.max(width, height) * 1.5;
+
+    return (
+        <div className="w-full h-[70vh] rounded-2xl overflow-hidden bg-gradient-to-b from-sky-100 to-sky-50">
+            <Canvas shadows>
+                <PerspectiveCamera 
+                    makeDefault 
+                    position={[width / 2, cameraDistance * 0.8, height + cameraDistance * 0.5]} 
+                    fov={50}
+                />
+                <OrbitControls 
+                    target={[width / 2, 0, height / 2]}
+                    minDistance={5}
+                    maxDistance={cameraDistance * 2}
+                    maxPolarAngle={Math.PI / 2.1}
+                    enablePan={true}
+                />
+                
+                {/* Sky background */}
+                <color attach="background" args={['#e0f2fe']} />
+                <fog attach="fog" args={['#e0f2fe', cameraDistance, cameraDistance * 3]} />
+
+                <FloorPlan3DScene plan={plan} />
+            </Canvas>
+        </div>
+    );
+};
+
 // Form Steps
 
 const steps = [
@@ -777,6 +1161,7 @@ export default function FloorPlan({ project }: PageProps) {
     const [selectedPlanIndex, setSelectedPlanIndex] = useState(project?.selected_plan_index || 0);
     const [isGenerating, setIsGenerating] = useState(false);
     const [unit, setUnit] = useState<'meters' | 'feet'>('meters');
+    const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
     const svgRef = useRef<HTMLDivElement>(null);
 
     // Project management state
@@ -1000,23 +1385,67 @@ export default function FloorPlan({ project }: PageProps) {
 
     const handleDownloadPNG = async () => {
         if (!svgRef.current) return;
+        const svg = svgRef.current.querySelector('svg');
+        if (!svg) {
+            alert('No floor plan to export. Please generate a floor plan first.');
+            return;
+        }
         
         try {
-            const html2canvas = (await import('html2canvas')).default;
-            const canvas = await (html2canvas as any)(svgRef.current, {
-                backgroundColor: '#ffffff',
-                scale: 2,
-                logging: false,
-            } as any);
+            // Clone the SVG to avoid modifying the original
+            const svgClone = svg.cloneNode(true) as SVGSVGElement;
             
-            const url = canvas.toDataURL('image/png');
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${currentProjectName || 'floor-plan'}.png`;
-            a.click();
+            // Get SVG dimensions
+            const svgRect = svg.getBoundingClientRect();
+            const width = svgRect.width * 2; // 2x scale for better quality
+            const height = svgRect.height * 2;
+            
+            // Set explicit dimensions on clone
+            svgClone.setAttribute('width', String(width));
+            svgClone.setAttribute('height', String(height));
+            
+            // Convert SVG to data URL
+            const svgData = new XMLSerializer().serializeToString(svgClone);
+            const svgBase64 = btoa(unescape(encodeURIComponent(svgData)));
+            const svgDataUrl = `data:image/svg+xml;base64,${svgBase64}`;
+            
+            // Create image and draw to canvas
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    alert('Failed to create canvas context.');
+                    return;
+                }
+                
+                // Fill white background
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, width, height);
+                
+                // Draw SVG image
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Export as PNG
+                const pngUrl = canvas.toDataURL('image/png');
+                const a = document.createElement('a');
+                a.href = pngUrl;
+                a.download = `${currentProjectName || 'floor-plan'}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            };
+            
+            img.onerror = () => {
+                alert('Failed to load SVG for export. Please try the SVG download instead.');
+            };
+            
+            img.src = svgDataUrl;
         } catch (error) {
             console.error('Failed to download PNG:', error);
-            alert('Failed to generate image. Please try again.');
+            alert('Failed to generate PNG image. Please try the SVG download instead.');
         }
     };
 
@@ -1107,67 +1536,109 @@ export default function FloorPlan({ project }: PageProps) {
                                     <ChevronLeft className="h-4 w-4" />
                                     Edit
                                 </button>
-                                <div className="relative group">
-                                    <button
-                                        className="flex items-center gap-2 rounded-xl bg-gray-900 px-4 py-2 text-white hover:bg-gray-800"
-                                    >
-                                        <Download className="h-4 w-4" />
-                                        Download Plans
-                                        <ChevronDown className="h-3 w-3" />
-                                    </button>
-                                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl border border-gray-200 shadow-xl z-50 overflow-hidden hidden group-hover:block">
+                                {viewMode === '2d' && (
+                                    <div className="relative group">
                                         <button
-                                            onClick={handleDownload}
-                                            className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 text-left transition-colors"
+                                            className="flex items-center gap-2 rounded-xl bg-gray-900 px-4 py-2 text-white hover:bg-gray-800"
                                         >
-                                            <div className="h-8 w-8 rounded bg-blue-50 flex items-center justify-center">
-                                                <span className="text-[10px] font-bold text-blue-600">SVG</span>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-900">Vector SVG</p>
-                                                <p className="text-xs text-gray-500">Best for editing</p>
-                                            </div>
+                                            <Download className="h-4 w-4" />
+                                            Download Plans
+                                            <ChevronDown className="h-3 w-3" />
                                         </button>
-                                        <button
-                                            onClick={handleDownloadPNG}
-                                            className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 text-left transition-colors border-t border-gray-100"
-                                        >
-                                            <div className="h-8 w-8 rounded bg-green-50 flex items-center justify-center">
-                                                <span className="text-[10px] font-bold text-green-600">PNG</span>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-900">Image PNG</p>
-                                                <p className="text-xs text-gray-500">Best for sharing</p>
-                                            </div>
-                                        </button>
+                                        <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl border border-gray-200 shadow-xl z-50 overflow-hidden hidden group-hover:block">
+                                            <button
+                                                onClick={handleDownload}
+                                                className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 text-left transition-colors"
+                                            >
+                                                <div className="h-8 w-8 rounded bg-blue-50 flex items-center justify-center">
+                                                    <span className="text-[10px] font-bold text-blue-600">SVG</span>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-900">Vector SVG</p>
+                                                    <p className="text-xs text-gray-500">Best for editing</p>
+                                                </div>
+                                            </button>
+                                            <button
+                                                onClick={handleDownloadPNG}
+                                                className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 text-left transition-colors border-t border-gray-100"
+                                            >
+                                                <div className="h-8 w-8 rounded bg-green-50 flex items-center justify-center">
+                                                    <span className="text-[10px] font-bold text-green-600">PNG</span>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-900">Image PNG</p>
+                                                    <p className="text-xs text-gray-500">Best for sharing</p>
+                                                </div>
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         </div>
 
                         <div className="grid gap-6 lg:grid-cols-4">
                             <div className="lg:col-span-3">
                                 <div className="space-y-4">
-                                    {/* Layout Selector */}
-                                    <div className="flex gap-3">
-                                        {generatedPlans.map((_, idx) => (
+                                    {/* Layout Selector and View Toggle */}
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div className="flex gap-3 flex-1">
+                                            {generatedPlans.map((_, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    onClick={() => setSelectedPlanIndex(idx)}
+                                                    className={`flex-1 py-3 px-4 rounded-xl font-semibold transition ${
+                                                        selectedPlanIndex === idx
+                                                            ? 'bg-gray-900 text-white'
+                                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    }`}
+                                                >
+                                                    Layout {idx + 1}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        
+                                        {/* 2D/3D Toggle */}
+                                        <div className="flex items-center gap-1 rounded-xl bg-gray-100 p-1">
                                             <button
-                                                key={idx}
-                                                onClick={() => setSelectedPlanIndex(idx)}
-                                                className={`flex-1 py-3 px-4 rounded-xl font-semibold transition ${
-                                                    selectedPlanIndex === idx
-                                                        ? 'bg-gray-900 text-white'
-                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                onClick={() => setViewMode('2d')}
+                                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition ${
+                                                    viewMode === '2d'
+                                                        ? 'bg-white text-gray-900 shadow-sm'
+                                                        : 'text-gray-600 hover:text-gray-900'
                                                 }`}
                                             >
-                                                Layout {idx + 1}
+                                                <Grid2X2 className="h-4 w-4" />
+                                                2D
                                             </button>
-                                        ))}
+                                            <button
+                                                onClick={() => setViewMode('3d')}
+                                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition ${
+                                                    viewMode === '3d'
+                                                        ? 'bg-white text-gray-900 shadow-sm'
+                                                        : 'text-gray-600 hover:text-gray-900'
+                                                }`}
+                                            >
+                                                <Box className="h-4 w-4" />
+                                                3D
+                                            </button>
+                                        </div>
                                     </div>
-                                    {/* Floor Plan */}
-                                    <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg" ref={svgRef}>
-                                        <FloorPlanSVG plan={generatedPlan} />
-                                    </div>
+                                    
+                                    {/* Floor Plan View */}
+                                    {viewMode === '2d' ? (
+                                        <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg" ref={svgRef}>
+                                            <FloorPlanSVG plan={generatedPlan} />
+                                        </div>
+                                    ) : (
+                                        <div className="rounded-2xl border border-gray-200 bg-white shadow-lg overflow-hidden">
+                                            <FloorPlan3D plan={generatedPlan} />
+                                            <div className="p-4 bg-gray-50 border-t border-gray-200">
+                                                <p className="text-sm text-gray-600 text-center">
+                                                    🖱️ Drag to rotate • Scroll to zoom • Right-click to pan
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <div>

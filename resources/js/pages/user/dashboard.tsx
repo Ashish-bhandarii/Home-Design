@@ -1,9 +1,9 @@
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import axios from 'axios';
-import { Copy, FolderOpen, MapPin, Palette, Plus, RefreshCw, Search, Sofa, Trash2, X } from 'lucide-react';
+import { Calendar, Clock, Copy, FolderOpen, Mail, MapPin, Palette, Plus, RefreshCw, Search, Sofa, Trash2, UserCheck, Video, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -210,7 +210,34 @@ interface InteriorDesignProject {
     updated_at: string;
 }
 
+// Booking interface
+interface Designer {
+    id: number;
+    name: string;
+    email: string;
+    specialty: string | null;
+    avatar: string | null;
+}
+
+interface Booking {
+    id: number;
+    designer_id: number;
+    booking_date: string;
+    booking_time: string;
+    consultation_type: 'online' | 'in-person';
+    status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+    project_type: string;
+    description: string;
+    meeting_link: string | null;
+    designer: Designer;
+}
+
+interface PageProps extends Record<string, unknown> {
+    upcomingBookings: Booking[];
+}
+
 export default function Dashboard() {
+    const { upcomingBookings = [] } = usePage<PageProps>().props;
     const [measurementSystem, setMeasurementSystem] = useState<MeasurementSystem>('ropani');
     
     // Floor Plan Projects state
@@ -369,6 +396,109 @@ export default function Dashboard() {
                                 </Link>
                             ))}
                         </div>
+
+                        {/* Upcoming Meets Card */}
+                        {upcomingBookings && upcomingBookings.length > 0 && (
+                            <div className="mt-8 rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+                                <div className="flex items-center justify-between border-b border-zinc-200 p-6 dark:border-zinc-800">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600">
+                                            <Calendar className="h-5 w-5 text-white" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
+                                                Upcoming Meets
+                                            </h2>
+                                            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                                                Your scheduled designer consultations
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <Link
+                                        href="/my-bookings"
+                                        className="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                                    >
+                                        View All
+                                    </Link>
+                                </div>
+                                <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                                    {upcomingBookings.map((booking) => (
+                                        <div key={booking.id} className="p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                                            <div className="flex items-start justify-between gap-4">
+                                                <div className="flex items-start gap-4">
+                                                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-sm font-bold text-white">
+                                                        {booking.designer.name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <div className="font-semibold text-zinc-900 dark:text-white">
+                                                            {booking.designer.name}
+                                                        </div>
+                                                        {booking.designer.specialty && (
+                                                            <div className="text-sm text-zinc-500 dark:text-zinc-400">
+                                                                {booking.designer.specialty}
+                                                            </div>
+                                                        )}
+                                                        <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-zinc-600 dark:text-zinc-400">
+                                                            <span className="flex items-center gap-1.5">
+                                                                <Calendar className="h-4 w-4" />
+                                                                {new Date(booking.booking_date).toLocaleDateString('en-US', {
+                                                                    weekday: 'short',
+                                                                    month: 'short',
+                                                                    day: 'numeric',
+                                                                })}
+                                                            </span>
+                                                            <span className="flex items-center gap-1.5">
+                                                                <Clock className="h-4 w-4" />
+                                                                {booking.booking_time}
+                                                            </span>
+                                                            <span className="flex items-center gap-1.5">
+                                                                {booking.consultation_type === 'online' ? (
+                                                                    <Video className="h-4 w-4 text-blue-500" />
+                                                                ) : (
+                                                                    <MapPin className="h-4 w-4 text-green-500" />
+                                                                )}
+                                                                <span className="capitalize">{booking.consultation_type}</span>
+                                                            </span>
+                                                        </div>
+                                                        <div className="mt-2 text-sm text-zinc-500 dark:text-zinc-500">
+                                                            {booking.project_type}
+                                                        </div>
+                                                        {/* Online meeting - show join button or waiting message */}
+                                                        {booking.consultation_type === 'online' && (
+                                                            booking.meeting_link && booking.status === 'confirmed' ? (
+                                                                <a
+                                                                    href={booking.meeting_link}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="mt-3 inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:from-blue-700 hover:to-indigo-700 hover:shadow-md"
+                                                                >
+                                                                    <Video className="h-4 w-4" />
+                                                                    Join Meeting
+                                                                </a>
+                                                            ) : (
+                                                                <div className="mt-3 flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
+                                                                    <Mail className="h-4 w-4" />
+                                                                    <span>Meeting link will be sent to your email once confirmed</span>
+                                                                </div>
+                                                            )
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <span
+                                                    className={`flex-shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
+                                                        booking.status === 'confirmed'
+                                                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                                            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                                    }`}
+                                                >
+                                                    {booking.status}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -495,7 +625,7 @@ export default function Dashboard() {
                                         <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
                                             {item.image ? (
                                                 <img
-                                                    src={item.image.startsWith('http') ? item.image : `/storage/${item.image}`}
+                                                    src={item.image}
                                                     alt={item.name}
                                                     className="h-full w-full object-cover transition-transform group-hover:scale-110"
                                                 />
@@ -542,7 +672,7 @@ export default function Dashboard() {
                         {filteredFurniture.length > 8 && (
                             <div className="mt-6 text-center">
                                 <Link
-                                    href="/interior-design"
+                                    href="/library/furniture"
                                     className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 font-medium"
                                 >
                                     View all {filteredFurniture.length} items
@@ -739,6 +869,15 @@ export default function Dashboard() {
                     </div>
                 </div>
             )}
+
+            {/* Floating Hire a Designer Button */}
+            <Link
+                href="/designers"
+                className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4 font-semibold text-white shadow-2xl shadow-indigo-500/40 transition-all hover:scale-105 hover:shadow-xl hover:shadow-indigo-500/50"
+            >
+                <UserCheck className="h-5 w-5" />
+                <span>Hire a Designer</span>
+            </Link>
         </AppLayout>
     );
 }

@@ -61,18 +61,18 @@ class RolesAndPermissionsSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission]);
         }
 
         // Create roles and assign permissions
         
         // Admin role - has all permissions
-        $adminRole = Role::create(['name' => 'admin']);
-        $adminRole->givePermissionTo(Permission::all());
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $adminRole->syncPermissions(Permission::all());
 
         // User role - limited permissions
-        $userRole = Role::create(['name' => 'user']);
-        $userRole->givePermissionTo([
+        $userRole = Role::firstOrCreate(['name' => 'user']);
+        $userRole->syncPermissions([
             'view designs',
             'create designs',
             'edit designs',
@@ -89,9 +89,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'view furniture',
         ]);
 
-        // Editor role - can manage content but not users
-        $editorRole = Role::create(['name' => 'editor']);
-        $editorRole->givePermissionTo([
+        // Designer role - professional designers who can be hired for consultations
+        $designerRole = Role::firstOrCreate(['name' => 'designer']);
+        $designerRole->syncPermissions([
             'view designs',
             'create designs',
             'edit designs',

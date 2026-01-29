@@ -33,7 +33,7 @@ class CartController extends Controller
                             'id' => $cartable->id,
                             'name' => $cartable->name,
                             'description' => $cartable->description,
-                            'image' => $cartable->image ? '/storage/' . $cartable->image : null,
+                            'image' => $cartable->image ? (str_starts_with($cartable->image, 'http') ? $cartable->image : '/storage/' . $cartable->image) : null,
                             'category' => $cartable->category,
                             'room' => $cartable->room,
                             'price' => $cartable->price,
@@ -41,7 +41,7 @@ class CartController extends Controller
                             'color' => $cartable->color,
                             'dimensions' => $cartable->dimensions,
                             'stock' => $cartable->stock,
-                            'availability' => $cartable->availability ?? 'In Stock',
+                            'availability' => $cartable->computed_availability,
                         ],
                         'created_at' => $item->created_at,
                     ];
@@ -57,7 +57,7 @@ class CartController extends Controller
                             'id' => $cartable->id,
                             'name' => $cartable->name,
                             'description' => $cartable->description,
-                            'image' => $cartable->image ? '/storage/' . $cartable->image : null,
+                            'image' => $cartable->image ? (str_starts_with($cartable->image, 'http') ? $cartable->image : '/storage/' . $cartable->image) : null,
                             'category' => $cartable->category,
                             'type' => $cartable->type,
                             'price' => $cartable->price_per_unit,
@@ -65,7 +65,7 @@ class CartController extends Controller
                             'color' => $cartable->color,
                             'brand' => $cartable->brand,
                             'stock' => $cartable->stock,
-                            'availability' => $cartable->availability ?? 'In Stock',
+                            'availability' => $cartable->computed_availability,
                         ],
                         'created_at' => $item->created_at,
                     ];
@@ -96,16 +96,11 @@ class CartController extends Controller
         
         // Check stock availability
         $item = null;
-        $availableStock = 0;
         
         if ($validated['cartable_type'] === 'App\\Models\\Furniture') {
             $item = Furniture::find($validated['cartable_id']);
-            $availableStock = $item ? $item->stock : 0;
-            $availability = $item ? $item->availability : null;
         } elseif ($validated['cartable_type'] === 'App\\Models\\Material') {
             $item = Material::find($validated['cartable_id']);
-            $availableStock = $item ? $item->stock : 0;
-            $availability = $item ? $item->availability : null;
         }
         
         if (!$item) {
@@ -114,6 +109,10 @@ class CartController extends Controller
                 'message' => 'Item not found',
             ], 404);
         }
+        
+        // Get available stock (null stock means unlimited)
+        $availableStock = $item->available_stock;
+        $hasUnlimitedStock = $item->stock === null;
         
         // Check if item already in cart
         $existingItem = Cart::where('user_id', $userId)
@@ -124,13 +123,8 @@ class CartController extends Controller
         $currentCartQty = $existingItem ? $existingItem->quantity : 0;
         $totalRequestedQty = $currentCartQty + $quantity;
         
-        // Check if item is Made to Order or In Stock/Limited Stock (skip stock number check)
-        $isMadeToOrder = $availability === 'Made to Order';
-        $isInStock = $availability === 'In Stock' || $availability === 'Limited Stock';
-        
-        // Validate stock - only block if explicitly "Out of Stock"
-        // For "In Stock" and "Limited Stock", the availability status takes priority over stock number
-        if ($availability === 'Out of Stock') {
+        // Check if item is available (stock > 0 or unlimited)
+        if (!$item->isAvailable()) {
             return response()->json([
                 'success' => false,
                 'message' => 'This item is out of stock',
@@ -138,17 +132,8 @@ class CartController extends Controller
             ], 400);
         }
         
-        // Only check numeric stock for items that have stock tracking enabled (not Made to Order, and stock > 0)
-        if (!$isMadeToOrder && !$isInStock && $availableStock <= 0) {
-            return response()->json([
-                'success' => false,
-                'message' => 'This item is out of stock',
-                'out_of_stock' => true,
-            ], 400);
-        }
-        
-        // Only limit quantity if stock tracking is active and availability is not set to ignore stock
-        if (!$isMadeToOrder && $availableStock > 0 && $totalRequestedQty > $availableStock) {
+        // Check if requested quantity exceeds available stock (only if stock is tracked)
+        if (!$hasUnlimitedStock && $totalRequestedQty > $availableStock) {
             return response()->json([
                 'success' => false,
                 'message' => "Only {$availableStock} items available in stock",
@@ -239,29 +224,20 @@ class CartController extends Controller
             ], 404);
         }
 
-        // Check stock availability for new quantity
-        $availableStock = 0;
-        $availability = null;
+        // Get the actual item to check stock
+        $item = null;
         if ($cartItem->cartable_type === 'App\\Models\\Furniture') {
             $item = Furniture::find($cartItem->cartable_id);
-            $availableStock = $item ? $item->stock : 0;
-            $availability = $item ? $item->availability : null;
         } elseif ($cartItem->cartable_type === 'App\\Models\\Material') {
             $item = Material::find($cartItem->cartable_id);
-            $availableStock = $item ? $item->stock : 0;
-            $availability = $item ? $item->availability : null;
         }
         
-        // Skip stock check for Made to Order items and items with availability set to In Stock/Limited Stock
-        $isMadeToOrder = $availability === 'Made to Order';
-        $isInStock = $availability === 'In Stock' || $availability === 'Limited Stock';
-        
-        // Only limit quantity if stock tracking is active (stock > 0) and not overridden by availability
-        if (!$isMadeToOrder && !$isInStock && $availableStock > 0 && $validated['quantity'] > $availableStock) {
+        // Check stock availability for new quantity (only if stock is tracked)
+        if ($item && $item->stock !== null && $validated['quantity'] > $item->available_stock) {
             return response()->json([
                 'success' => false,
-                'message' => "Only {$availableStock} items available in stock",
-                'available_stock' => $availableStock,
+                'message' => "Only {$item->available_stock} items available in stock",
+                'available_stock' => $item->available_stock,
             ], 400);
         }
 

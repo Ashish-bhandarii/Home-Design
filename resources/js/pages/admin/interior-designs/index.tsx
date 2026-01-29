@@ -70,16 +70,16 @@ export default function InteriorDesignsIndex({ designs, filters, roomTypeOptions
   };
 
   const toggleFeatured = (id: number) => {
-    router.post(`/admin/interior-designs/${id}/toggle-featured`, {}, { preserveScroll: true });
+    router.post(`/admin/interior-designs/${id}/toggle-featured`, {}, { preserveScroll: true, preserveState: false });
   };
 
   const toggleActive = (id: number) => {
-    router.post(`/admin/interior-designs/${id}/toggle-active`, {}, { preserveScroll: true });
+    router.post(`/admin/interior-designs/${id}/toggle-active`, {}, { preserveScroll: true, preserveState: false });
   };
 
   const deleteDesign = (id: number) => {
     if (confirm('Delete this interior design?')) {
-      router.delete(`/admin/interior-designs/${id}`, { preserveScroll: true });
+      router.delete(`/admin/interior-designs/${id}`, { preserveScroll: true, preserveState: false });
     }
   };
 

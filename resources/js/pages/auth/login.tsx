@@ -7,11 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 import { register } from '@/routes';
-import { store } from '@/routes/login';
 import oauth from '@/routes/oauth';
 import { request } from '@/routes/password';
-import { Form, Head } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, useForm } from '@inertiajs/react';
+import { FormEventHandler, useState } from 'react';
 
 interface LoginProps {
     status?: string;
@@ -26,6 +25,33 @@ export default function Login({
 }: LoginProps) {
     const [showPassword, setShowPassword] = useState(false);
     const googleRedirectUrl = oauth.google.redirect().url;
+
+    const { data, setData, post, processing, errors, reset } = useForm({
+        email: '',
+        password: '',
+        remember: false,
+    });
+
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const submit: FormEventHandler = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (isSubmitting || processing) return;
+        
+        setIsSubmitting(true);
+        post('/login', {
+            onFinish: () => {
+                reset('password');
+                setIsSubmitting(false);
+            },
+            onError: () => {
+                setIsSubmitting(false);
+            },
+        });
+    };
+    
     return (
         <AuthLayout
             title="Log in to your account"
@@ -58,103 +84,111 @@ export default function Login({
                 </div>
             </div>
 
-            <Form
-                {...store.form()}
-                resetOnSuccess={['password']}
-                className="flex flex-col gap-6"
-            >
-                {({ processing, errors }) => (
-                    <>
-                        <div className="grid gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    name="email"
-                                    required
-                                    autoFocus
-                                    tabIndex={1}
-                                    autoComplete="email"
-                                    placeholder="email@example.com"
-                                />
-                                <InputError message={errors.email} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <div className="flex items-center">
-                                    <Label htmlFor="password">Password</Label>
-                                    {canResetPassword && (
-                                        <TextLink
-                                            href={request()}
-                                            className="ml-auto text-sm"
-                                            tabIndex={5}
-                                        >
-                                            Forgot password?
-                                        </TextLink>
-                                    )}
-                                </div>
-                                <div className="relative">
-                                    <Input
-                                        id="password"
-                                        type={showPassword ? 'text' : 'password'}
-                                        name="password"
-                                        required
-                                        tabIndex={2}
-                                        autoComplete="current-password"
-                                        placeholder="Password"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword((v) => !v)}
-                                        className="absolute inset-y-0 right-2 my-auto rounded px-2 text-xs text-muted-foreground hover:bg-muted"
-                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
-                                        tabIndex={-1}
-                                    >
-                                        {showPassword ? 'Hide' : 'Show'}
-                                    </button>
-                                </div>
-                                <InputError message={errors.password} />
-                            </div>
-
-                            <div className="flex items-center space-x-3">
-                                <Checkbox
-                                    id="remember"
-                                    name="remember"
-                                    tabIndex={3}
-                                />
-                                <Label htmlFor="remember" className="text-sm text-zinc-600 dark:text-zinc-400">Remember me</Label>
-                            </div>
-
-                            <Button
-                                type="submit"
-                                className="mt-4 w-full h-11 bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 text-white font-semibold rounded-xl shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 transition-all hover:scale-[1.02]"
-                                tabIndex={4}
-                                disabled={processing}
-                                data-test="login-button"
-                            >
-                                {processing && <Spinner />}
-                                Log in
-                            </Button>
-                        </div>
-
-                        {canRegister && (
-                            <div className="text-center text-sm text-zinc-600 dark:text-zinc-400">
-                                Don't have an account?{' '}
-                                <TextLink href={register()} tabIndex={5} className="font-semibold text-orange-500 hover:text-orange-600">
-                                    Sign up
-                                </TextLink>
-                            </div>
-                        )}
-                    </>
-                )}
-            </Form>
-
+            {/* Success status message (e.g., after password reset) */}
             {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
+                <div className="mb-4 rounded-lg bg-green-50 border border-green-200 p-4 text-center text-sm font-medium text-green-600 dark:bg-green-950/30 dark:border-green-800 dark:text-green-400">
                     {status}
                 </div>
             )}
+
+            <form onSubmit={submit} className="flex flex-col gap-6">
+                {/* General error message for failed authentication */}
+                {errors.email && (
+                    <div className="rounded-lg bg-red-50 border border-red-200 p-4 dark:bg-red-950/30 dark:border-red-800">
+                        <p className="text-sm text-red-600 dark:text-red-400">
+                            {errors.email}
+                        </p>
+                    </div>
+                )}
+                
+                <div className="grid gap-6">
+                    <div className="grid gap-2">
+                        <Label htmlFor="email">Email address</Label>
+                        <Input
+                            id="email"
+                            type="email"
+                            name="email"
+                            value={data.email}
+                            onChange={(e) => setData('email', e.target.value)}
+                            required
+                            autoFocus
+                            tabIndex={1}
+                            autoComplete="email"
+                            placeholder="email@example.com"
+                            className={errors.email ? 'border-red-500' : ''}
+                        />
+                    </div>
+
+                    <div className="grid gap-2">
+                        <div className="flex items-center">
+                            <Label htmlFor="password">Password</Label>
+                            {canResetPassword && (
+                                <TextLink
+                                    href={request()}
+                                    className="ml-auto text-sm"
+                                    tabIndex={5}
+                                >
+                                    Forgot password?
+                                </TextLink>
+                            )}
+                        </div>
+                        <div className="relative">
+                            <Input
+                                id="password"
+                                type={showPassword ? 'text' : 'password'}
+                                name="password"
+                                value={data.password}
+                                onChange={(e) => setData('password', e.target.value)}
+                                required
+                                tabIndex={2}
+                                autoComplete="current-password"
+                                placeholder="Password"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword((v) => !v)}
+                                className="absolute inset-y-0 right-2 my-auto rounded px-2 text-xs text-muted-foreground hover:bg-muted"
+                                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                tabIndex={-1}
+                            >
+                                {showPassword ? 'Hide' : 'Show'}
+                            </button>
+                        </div>
+                        <InputError message={errors.password} />
+                    </div>
+
+                    <div className="flex items-center space-x-3">
+                        <Checkbox
+                            id="remember"
+                            name="remember"
+                            checked={data.remember}
+                            onCheckedChange={(checked) => setData('remember', checked === true)}
+                            tabIndex={3}
+                        />
+                        <Label htmlFor="remember" className="text-sm text-zinc-600 dark:text-zinc-400">Remember me</Label>
+                    </div>
+
+                    <Button
+                        type="submit"
+                        className="mt-4 w-full h-11 rounded-lg bg-zinc-900 text-white font-semibold hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-500/20 transition-colors dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+                        tabIndex={4}
+                        disabled={processing || isSubmitting}
+                        data-test="login-button"
+                    >
+                        {(processing || isSubmitting) && <Spinner />}
+                        {processing || isSubmitting ? 'Logging in...' : 'Log in'}
+                    </Button>
+                </div>
+
+                {canRegister && (
+                    <div className="text-center text-sm text-zinc-600 dark:text-zinc-400">
+                        Don't have an account?{' '}
+                        <TextLink href={register()} tabIndex={5} className="font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">
+                            Sign up
+                        </TextLink>
+                    </div>
+                )}
+            </form>
         </AuthLayout>
     );
 }

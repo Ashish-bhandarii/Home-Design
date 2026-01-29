@@ -74,6 +74,44 @@ class Material extends Model
         return null;
     }
 
+    /**
+     * Get computed availability based on stock
+     * Availability is purely computed from stock - no manual override needed
+     */
+    public function getComputedAvailabilityAttribute()
+    {
+        $stock = $this->stock;
+        
+        // If stock is null (not set), treat as available
+        if ($stock === null) {
+            return 'In Stock';
+        }
+        
+        if ($stock <= 0) {
+            return 'Out of Stock';
+        } elseif ($stock <= 5) {
+            return 'Limited Stock';
+        }
+        
+        return 'In Stock';
+    }
+
+    /**
+     * Check if item is available for purchase
+     */
+    public function isAvailable(): bool
+    {
+        return $this->stock === null || $this->stock > 0;
+    }
+
+    /**
+     * Get available stock quantity
+     */
+    public function getAvailableStockAttribute(): int
+    {
+        return max(0, $this->stock ?? 999);
+    }
+
     public static function categories()
     {
         return ['Construction', 'Flooring', 'Wall Finish', 'Color Palette'];

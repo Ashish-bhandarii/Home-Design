@@ -1,5 +1,4 @@
 import AppLogoIcon from '@/components/app-logo-icon';
-import { NavFooter } from '@/components/nav-footer';
 import { NavUser } from '@/components/nav-user';
 import {
     Sidebar,
@@ -15,7 +14,7 @@ import { dashboard } from '@/routes';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import axios from 'axios';
-import { Box, FolderOpen, Heart, HelpCircle, Home, Image, Layout, LayoutGrid, Palette, PenTool, Ruler, Settings, ShoppingBag, ShoppingCart } from 'lucide-react';
+import { Box, Calendar, FolderOpen, Heart, Home, Image, Layout, LayoutGrid, Palette, PenTool, Ruler, ShoppingBag, ShoppingCart, UserCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export function AppSidebar() {
@@ -52,25 +51,6 @@ export function AppSidebar() {
             href: '/projects',
             icon: FolderOpen,
         },
-        ...(isLoggedIn
-            ? [
-                  {
-                      title: 'Wishlist',
-                      href: '/wishlist',
-                      icon: Heart,
-                  },
-                  {
-                      title: 'Cart',
-                      href: '/cart',
-                      icon: ShoppingCart,
-                  },
-                  {
-                      title: 'My Orders',
-                      href: '/orders',
-                      icon: ShoppingBag,
-                  },
-              ]
-            : []),
         {
             title: 'Floor Plans',
             href: '/floor-plan',
@@ -86,6 +66,35 @@ export function AppSidebar() {
             href: '/interior-design',
             icon: PenTool,
         },
+        ...(isLoggedIn
+            ? [
+                  {
+                      title: 'My Orders',
+                      href: '/orders',
+                      icon: ShoppingBag,
+                  },
+                  {
+                      title: 'Wishlist',
+                      href: '/wishlist',
+                      icon: Heart,
+                  },
+                  {
+                      title: 'Cart',
+                      href: '/cart',
+                      icon: ShoppingCart,
+                  },
+                  {
+                      title: 'Hire a Designer',
+                      href: '/designers',
+                      icon: UserCheck,
+                  },
+                  {
+                      title: 'My Bookings',
+                      href: '/my-bookings',
+                      icon: Calendar,
+                  },
+              ]
+            : []),
         {
             title: 'Gallery',
             href: '/gallery',
@@ -108,19 +117,6 @@ export function AppSidebar() {
             title: 'Measurements',
             href: '/tools/measurements',
             icon: Ruler,
-        },
-    ];
-
-    const footerNavItems: NavItem[] = [
-        {
-            title: 'Settings',
-            href: '/settings',
-            icon: Settings,
-        },
-        {
-            title: 'Help & Support',
-            href: '/help',
-            icon: HelpCircle,
         },
     ];
 
@@ -195,9 +191,6 @@ export function AppSidebar() {
 
             {/* Footer */}
             <SidebarFooter className="px-2 py-4">
-                {/* Footer links (Settings, Help) */}
-                <NavFooter items={footerNavItems} />
-
                 {/* User area: show profile menu when logged in, otherwise show Login CTA */}
                 {page.props?.auth?.user ? (
                     <NavUser />

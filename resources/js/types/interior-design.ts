@@ -83,6 +83,7 @@ export interface InteriorRoom {
   id: string;
   templateId: RoomTemplateId;
   name: string;
+  shapeId: 'square' | 'rect-h' | 'rect-v' | 'l-right' | 'l-left' | 'l-corner';
   level: number;
   width: number;
   length: number;

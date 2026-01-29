@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Furniture;
+use App\Models\Material;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -112,7 +114,7 @@ class OrderController extends Controller
                     'id' => $item->id,
                     'name' => $item->name,
                     'description' => $item->description,
-                    'image' => $item->image ? '/storage/' . $item->image : null,
+                    'image' => $item->image ? (str_starts_with($item->image, 'http') ? $item->image : '/storage/' . $item->image) : null,
                     'price' => $item->price,
                     'quantity' => $item->quantity,
                     'total' => $item->total,
@@ -131,7 +133,58 @@ class OrderController extends Controller
             'status' => 'required|in:pending,confirmed,processing,shipped,delivered,cancelled',
         ]);
 
-        $order->status = $validated['status'];
+        $previousStatus = $order->status;
+        $newStatus = $validated['status'];
+
+        // If order is being cancelled and was not already cancelled, restore stock
+        if ($newStatus === 'cancelled' && $previousStatus !== 'cancelled') {
+            $order->load('items');
+            foreach ($order->items as $item) {
+                if ($item->orderable_type === 'App\\Models\\Furniture') {
+                    $furniture = Furniture::find($item->orderable_id);
+                    if ($furniture && $furniture->stock !== null) {
+                        $furniture->stock += $item->quantity;
+                        $furniture->save();
+                    }
+                } elseif ($item->orderable_type === 'App\\Models\\Material') {
+                    $material = Material::find($item->orderable_id);
+                    if ($material && $material->stock !== null) {
+                        $material->stock += $item->quantity;
+                        $material->save();
+                    }
+                }
+            }
+        }
+
+        // If order was cancelled and is now being restored to another status, decrement stock again
+        if ($previousStatus === 'cancelled' && $newStatus !== 'cancelled') {
+            $order->load('items');
+            foreach ($order->items as $item) {
+                if ($item->orderable_type === 'App\\Models\\Furniture') {
+                    $furniture = Furniture::find($item->orderable_id);
+                    if ($furniture && $furniture->stock !== null) {
+                        // Check if there's enough stock
+                        if ($furniture->stock < $item->quantity) {
+                            return back()->with('error', "Cannot restore order. Insufficient stock for {$item->name}.");
+                        }
+                        $furniture->stock = max(0, $furniture->stock - $item->quantity);
+                        $furniture->save();
+                    }
+                } elseif ($item->orderable_type === 'App\\Models\\Material') {
+                    $material = Material::find($item->orderable_id);
+                    if ($material && $material->stock !== null) {
+                        // Check if there's enough stock
+                        if ($material->stock < $item->quantity) {
+                            return back()->with('error', "Cannot restore order. Insufficient stock for {$item->name}.");
+                        }
+                        $material->stock = max(0, $material->stock - $item->quantity);
+                        $material->save();
+                    }
+                }
+            }
+        }
+
+        $order->status = $newStatus;
         $order->save();
 
         return back()->with('success', 'Order status updated successfully');
@@ -162,6 +215,36 @@ class OrderController extends Controller
      */
     public function destroy(Order $order)
     {
+        // Restore stock if order was not already cancelled
+        if ($order->status !== 'cancelled') {
+            $order->load('items');
+            foreach ($order->items as $item) {
+                if ($item->orderable_type === 'App\\Models\\Furniture') {
+                    $furniture = Furniture::find($item->orderable_id);
+                    if ($furniture) {
+                        $furniture->stock += $item->quantity;
+                        if ($furniture->stock > 5) {
+                            $furniture->availability = 'In Stock';
+                        } elseif ($furniture->stock > 0) {
+                            $furniture->availability = 'Low Stock';
+                        }
+                        $furniture->save();
+                    }
+                } elseif ($item->orderable_type === 'App\\Models\\Material') {
+                    $material = Material::find($item->orderable_id);
+                    if ($material) {
+                        $material->stock += $item->quantity;
+                        if ($material->stock > 5) {
+                            $material->availability = 'In Stock';
+                        } elseif ($material->stock > 0) {
+                            $material->availability = 'Low Stock';
+                        }
+                        $material->save();
+                    }
+                }
+            }
+        }
+
         $order->items()->delete();
         $order->delete();
 

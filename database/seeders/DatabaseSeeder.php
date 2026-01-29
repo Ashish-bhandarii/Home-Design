@@ -42,17 +42,22 @@ class DatabaseSeeder extends Seeder
         );
         $user->assignRole('user');
 
-        // Editor user
-        $editor = User::firstOrCreate(
-            ['email' => 'editor@design.com'],
+        // Designer user
+        $designer = User::firstOrCreate(
+            ['email' => 'designer@design.com'],
             [
-                'name' => 'Editor',
+                'name' => 'Designer',
                 'password' => bcrypt('password'),
-                'role' => 'editor',
+                'role' => 'designer',
+                'specialty' => 'Interior Design',
+                'bio' => 'Professional interior designer with 5 years of experience.',
+                'hourly_rate' => 2500,
+                'experience_years' => 5,
+                'is_available' => true,
                 'email_verified_at' => now(),
             ]
         );
-        $editor->assignRole('editor');
+        $designer->assignRole('designer');
 
         $this->call([
             InteriorCatalogSeeder::class,

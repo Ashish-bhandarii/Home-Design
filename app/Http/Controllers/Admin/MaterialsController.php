@@ -44,7 +44,8 @@ class MaterialsController extends Controller
                     'color' => $item->color,
                     'brand' => $item->brand,
                     'specifications' => $item->specifications,
-                    'availability' => $item->availability,
+                    'availability' => $item->computed_availability,
+                    'stock' => $item->stock,
                     'isActive' => $item->is_active,
                     'isFeatured' => $item->is_featured,
                     'createdAt' => $item->created_at->format('Y-m-d'),
@@ -109,7 +110,9 @@ class MaterialsController extends Controller
                 'color' => $material->color,
                 'brand' => $material->brand,
                 'specifications' => $material->specifications,
-                'availability' => $material->availability,
+                'availability' => $material->availability, // Raw value for editing
+                'computed_availability' => $material->computed_availability, // Computed for display
+                'stock' => $material->stock,
                 'is_active' => $material->is_active,
                 'is_featured' => $material->is_featured,
             ],
@@ -138,8 +141,8 @@ class MaterialsController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            // Delete old image
-            if ($material->image) {
+            // Delete old image only if it's a local file, not an external URL
+            if ($material->image && !str_starts_with($material->image, 'http')) {
                 Storage::disk('public')->delete($material->image);
             }
             $validated['image'] = $request->file('image')->store('materials', 'public');
@@ -152,11 +155,12 @@ class MaterialsController extends Controller
 
     public function destroy(Material $material)
     {
-        if ($material->image) {
+        // Delete image only if it's a local file, not an external URL
+        if ($material->image && !str_starts_with($material->image, 'http')) {
             Storage::disk('public')->delete($material->image);
         }
 
-        $material->delete();
+        $material->delete();;
 
         return redirect()->route('admin.materials.index')->with('success', 'Material deleted successfully.');
     }

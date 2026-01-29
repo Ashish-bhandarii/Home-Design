@@ -61,7 +61,7 @@ Created comprehensive permission structure:
 **Roles:**
 - **Admin**: Full access to everything
 - **User**: Can create and manage their own designs
-- **Editor**: Can manage content but not users or settings
+- **Designer**: Professional designers who can be hired for consultations
 
 **Permission Categories:**
 - User Management (view, create, edit, delete users)
@@ -76,7 +76,7 @@ Created comprehensive permission structure:
 ### 3. Database Seeder
 Updated to:
 - Call `RolesAndPermissionsSeeder` first
-- Create 3 users: admin, test user, and editor
+- Create 3 users: admin, test user, and designer
 - Assign appropriate roles using `assignRole()`
 
 ### 4. Authentication
@@ -149,13 +149,13 @@ Route::get('/admin', [AdminController::class, 'dashboard'])
 ```php
 // Assign role
 $user->assignRole('admin');
-$user->assignRole(['admin', 'editor']);
+$user->assignRole(['admin', 'designer']);
 
 // Remove role
 $user->removeRole('admin');
 
 // Sync roles (removes all existing and adds new)
-$user->syncRoles(['editor']);
+$user->syncRoles(['designer']);
 
 // Give permission
 $user->givePermissionTo('edit-users');
@@ -172,7 +172,7 @@ After seeding, you'll have these users:
 |-------|----------|------|
 | admin@design.com | password | admin |
 | test@example.com | password | user |
-| editor@design.com | password | editor |
+| designer@design.com | password | designer |
 
 ## Next Steps (Optional Enhancements)
 

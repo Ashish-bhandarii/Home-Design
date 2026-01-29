@@ -101,6 +101,7 @@ export default function AdminOrderShow({ order }: Props) {
             { status: newStatus },
             {
                 preserveScroll: true,
+                preserveState: false,
                 onFinish: () => setUpdatingStatus(false),
             }
         );
@@ -113,6 +114,7 @@ export default function AdminOrderShow({ order }: Props) {
             { payment_status: newStatus },
             {
                 preserveScroll: true,
+                preserveState: false,
                 onFinish: () => setUpdatingPayment(false),
             }
         );
@@ -121,7 +123,9 @@ export default function AdminOrderShow({ order }: Props) {
     const handleDelete = () => {
         if (!confirm('Are you sure you want to delete this order? This action cannot be undone.')) return;
         setDeleting(true);
-        router.delete(`/admin/orders/${order.id}`);
+        router.delete(`/admin/orders/${order.id}`, {
+            preserveState: false,
+        });
     };
 
     const currentStatusStyle = statusColors[order.status] || statusColors.pending;

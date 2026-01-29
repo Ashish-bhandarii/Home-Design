@@ -16,6 +16,16 @@ class MaterialsController extends Controller
             ->orderBy('name')
             ->get()
             ->map(function ($item) {
+                // Handle both external URLs and local storage paths
+                $image = null;
+                if ($item->image) {
+                    if (str_starts_with($item->image, 'http')) {
+                        $image = $item->image;
+                    } else {
+                        $image = '/storage/' . $item->image;
+                    }
+                }
+                
                 return [
                     'id' => $item->id,
                     'name' => $item->name,
@@ -25,11 +35,11 @@ class MaterialsController extends Controller
                     'type' => $item->type,
                     'price_per_unit' => $item->price_per_unit,
                     'unit' => $item->unit,
-                    'image' => $item->image,
+                    'image' => $image,
                     'color' => $item->color,
                     'brand' => $item->brand,
                     'specifications' => $item->specifications,
-                    'availability' => $item->availability,
+                    'availability' => $item->computed_availability,
                     'stock' => $item->stock,
                     'is_featured' => $item->is_featured,
                 ];
@@ -48,8 +58,21 @@ class MaterialsController extends Controller
             abort(404);
         }
 
+        // Handle both external URLs and local storage paths
+        $image = null;
+        if ($material->image) {
+            if (str_starts_with($material->image, 'http')) {
+                $image = $material->image;
+            } else {
+                $image = '/storage/' . $material->image;
+            }
+        }
+
         return Inertia::render('user/material-detail', [
-            'item' => $material,
+            'item' => [
+                ...$material->toArray(),
+                'image' => $image,
+            ],
         ]);
     }
 }

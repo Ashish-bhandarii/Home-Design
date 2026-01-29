@@ -18,6 +18,16 @@ class FurnitureController extends Controller
             ->orderBy('name')
             ->get()
             ->map(function ($item) {
+                // Handle both external URLs and local storage paths
+                $image = null;
+                if ($item->image) {
+                    if (str_starts_with($item->image, 'http')) {
+                        $image = $item->image;
+                    } else {
+                        $image = '/storage/' . $item->image;
+                    }
+                }
+                
                 return [
                     'id' => $item->id,
                     'name' => $item->name,
@@ -26,11 +36,12 @@ class FurnitureController extends Controller
                     'category' => $item->category,
                     'room' => $item->room,
                     'price' => $item->price,
-                    'image' => $item->image ? '/storage/' . $item->image : null,
+                    'image' => $image,
                     'dimensions' => $item->dimensions,
                     'material' => $item->material,
                     'color' => $item->color,
                     'stock' => $item->stock,
+                    'availability' => $item->computed_availability,
                     'is_featured' => $item->is_featured,
                 ];
             });

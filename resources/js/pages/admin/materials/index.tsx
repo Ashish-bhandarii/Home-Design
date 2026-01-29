@@ -58,12 +58,18 @@ export default function MaterialsIndex({ materials, categories, types }: Props) 
 
     const handleDelete = (id: number) => {
         if (confirm('Are you sure you want to delete this material?')) {
-            router.delete(`/admin/materials/${id}`);
+            router.delete(`/admin/materials/${id}`, {
+                preserveScroll: true,
+                preserveState: false,
+            });
         }
     };
 
     const toggleActive = (id: number) => {
-        router.post(`/admin/materials/${id}/toggle-active`);
+        router.post(`/admin/materials/${id}/toggle-active`, {}, {
+            preserveScroll: true,
+            preserveState: false,
+        });
     };
 
     return (
@@ -240,7 +246,7 @@ export default function MaterialsIndex({ materials, categories, types }: Props) 
                                                     style={{ backgroundColor: item.color || '#F1F5F9' }}
                                                 >
                                                     {item.image ? (
-                                                        <img src={`/storage/${item.image}`} alt={item.name} className="h-full w-full rounded-lg object-cover" />
+                                                        <img src={item.image.startsWith('http') ? item.image : `/storage/${item.image}`} alt={item.name} className="h-full w-full rounded-lg object-cover" />
                                                     ) : !item.color ? (
                                                         <Layers className="h-6 w-6 text-slate-400" />
                                                     ) : null}

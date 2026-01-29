@@ -1,6 +1,5 @@
 import AdminLayout from '@/layouts/admin-layout';
-import admin from '@/routes/admin';
-import { Head, Link, type InertiaLinkProps } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import {
     AlertTriangle,
     Armchair,

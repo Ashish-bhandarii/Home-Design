@@ -56,10 +56,9 @@ export default function Cart({ cartItems: initialCartItems }: Props) {
         if (newQuantity < 1) return;
         if (newQuantity > 99) return;
         
-        // Check stock limit (skip for Made to Order items)
+        // Check stock limit (skip if stock is not tracked - null/undefined means unlimited)
         const stock = item.item.stock;
-        const isMadeToOrder = item.item.availability === 'Made to Order';
-        if (!isMadeToOrder && stock !== undefined && newQuantity > stock) {
+        if (stock !== null && stock !== undefined && newQuantity > stock) {
             showToast(`Only ${stock} items available in stock`, 'error');
             return;
         }
@@ -198,12 +197,15 @@ export default function Cart({ cartItems: initialCartItems }: Props) {
                                                             src={item.item.image}
                                                             alt={item.item.name}
                                                             className="h-full w-full object-cover"
+                                                            onError={(e) => {
+                                                                e.currentTarget.style.display = 'none';
+                                                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                                            }}
                                                         />
-                                                    ) : (
-                                                        <div className="flex h-full items-center justify-center">
-                                                            <Sofa className="h-8 w-8 text-zinc-400" />
-                                                        </div>
-                                                    )}
+                                                    ) : null}
+                                                    <div className={`flex h-full items-center justify-center ${item.item.image ? 'hidden' : ''}`}>
+                                                        <Sofa className="h-8 w-8 text-zinc-400" />
+                                                    </div>
                                                 </div>
 
                                                 {/* Details */}
@@ -215,21 +217,19 @@ export default function Cart({ cartItems: initialCartItems }: Props) {
                                                         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
                                                             {item.item.category} • {item.item.room}
                                                         </p>
-                                                        {/* Stock Warning */}
-                                                        {item.item.availability === 'Made to Order' ? (
-                                                            <p className="mt-1 text-xs text-blue-600 dark:text-blue-400">
-                                                                Made to order • 2-4 weeks delivery
-                                                            </p>
-                                                        ) : item.item.availability === 'Out of Stock' || (item.item.stock !== undefined && item.item.stock <= 0) ? (
+                                                        {/* Stock Warning - computed from backend */}
+                                                        {item.item.availability === 'Out of Stock' ? (
                                                             <p className="mt-1 text-xs font-medium text-red-500">
                                                                 Out of Stock - Please remove this item
                                                             </p>
-                                                        ) : item.item.availability === 'Limited Stock' || (item.item.stock !== undefined && item.item.stock > 0 && item.item.stock <= 5) ? (
+                                                        ) : item.item.availability === 'Limited Stock' ? (
                                                             <p className="mt-1 text-xs text-orange-600 dark:text-orange-400">
-                                                                {item.item.availability === 'Limited Stock' ? 'Limited Stock' : `Only ${item.item.stock} left in stock`}
+                                                                {item.item.stock !== undefined && item.item.stock !== null 
+                                                                    ? `Only ${item.item.stock} left in stock` 
+                                                                    : 'Limited Stock'}
                                                             </p>
                                                         ) : null}
-                                                        {item.item.availability !== 'Made to Order' && item.item.stock !== undefined && item.quantity > item.item.stock && (
+                                                        {item.item.stock !== null && item.item.stock !== undefined && item.quantity > item.item.stock && (
                                                             <p className="mt-1 text-xs font-medium text-red-500">
                                                                 Quantity exceeds available stock ({item.item.stock})
                                                             </p>
@@ -250,7 +250,7 @@ export default function Cart({ cartItems: initialCartItems }: Props) {
                                                             </span>
                                                             <button
                                                                 onClick={() => updateQuantity(item, item.quantity + 1)}
-                                                                disabled={updatingId === item.id || (item.item.availability !== 'Made to Order' && item.item.stock !== undefined && item.quantity >= item.item.stock)}
+                                                                disabled={updatingId === item.id || (item.item.stock !== null && item.item.stock !== undefined && item.quantity >= item.item.stock)}
                                                                 className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
                                                             >
                                                                 <Plus className="h-4 w-4" />
@@ -296,12 +296,15 @@ export default function Cart({ cartItems: initialCartItems }: Props) {
                                                             src={item.item.image}
                                                             alt={item.item.name}
                                                             className="h-full w-full object-cover"
+                                                            onError={(e) => {
+                                                                e.currentTarget.style.display = 'none';
+                                                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                                            }}
                                                         />
-                                                    ) : (
-                                                        <div className="flex h-full items-center justify-center">
-                                                            <Package className="h-8 w-8 text-zinc-400" />
-                                                        </div>
-                                                    )}
+                                                    ) : null}
+                                                    <div className={`flex h-full items-center justify-center ${item.item.image ? 'hidden' : ''}`}>
+                                                        <Package className="h-8 w-8 text-zinc-400" />
+                                                    </div>
                                                 </div>
 
                                                 {/* Details */}
@@ -314,21 +317,19 @@ export default function Cart({ cartItems: initialCartItems }: Props) {
                                                             {item.item.category} • {item.item.brand}
                                                             {item.item.unit && ` • per ${item.item.unit}`}
                                                         </p>
-                                                        {/* Stock Warning */}
-                                                        {item.item.availability === 'Made to Order' ? (
-                                                            <p className="mt-1 text-xs text-blue-600 dark:text-blue-400">
-                                                                Made to order • 2-4 weeks delivery
-                                                            </p>
-                                                        ) : item.item.availability === 'Out of Stock' || (item.item.stock !== undefined && item.item.stock <= 0) ? (
+                                                        {/* Stock Warning - computed from backend */}
+                                                        {item.item.availability === 'Out of Stock' ? (
                                                             <p className="mt-1 text-xs font-medium text-red-500">
                                                                 Out of Stock - Please remove this item
                                                             </p>
-                                                        ) : item.item.availability === 'Limited Stock' || (item.item.stock !== undefined && item.item.stock > 0 && item.item.stock <= 5) ? (
+                                                        ) : item.item.availability === 'Limited Stock' ? (
                                                             <p className="mt-1 text-xs text-orange-600 dark:text-orange-400">
-                                                                {item.item.availability === 'Limited Stock' ? 'Limited Stock' : `Only ${item.item.stock} left in stock`}
+                                                                {item.item.stock !== undefined && item.item.stock !== null 
+                                                                    ? `Only ${item.item.stock} left in stock` 
+                                                                    : 'Limited Stock'}
                                                             </p>
                                                         ) : null}
-                                                        {item.item.availability !== 'Made to Order' && item.item.stock !== undefined && item.quantity > item.item.stock && (
+                                                        {item.item.stock !== null && item.item.stock !== undefined && item.quantity > item.item.stock && (
                                                             <p className="mt-1 text-xs font-medium text-red-500">
                                                                 Quantity exceeds available stock ({item.item.stock})
                                                             </p>
@@ -349,7 +350,7 @@ export default function Cart({ cartItems: initialCartItems }: Props) {
                                                             </span>
                                                             <button
                                                                 onClick={() => updateQuantity(item, item.quantity + 1)}
-                                                                disabled={updatingId === item.id || (item.item.availability !== 'Made to Order' && item.item.stock !== undefined && item.quantity >= item.item.stock)}
+                                                                disabled={updatingId === item.id || (item.item.stock !== null && item.item.stock !== undefined && item.quantity >= item.item.stock)}
                                                                 className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
                                                             >
                                                                 <Plus className="h-4 w-4" />
@@ -439,7 +440,7 @@ export default function Cart({ cartItems: initialCartItems }: Props) {
                                             d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                                         />
                                     </svg>
-                                    Secure checkout
+                                    Secure checkoutv 
                                 </div>
                             </div>
                         </div>
@@ -449,3 +450,4 @@ export default function Cart({ cartItems: initialCartItems }: Props) {
         </AppLayout>
     );
 }
+

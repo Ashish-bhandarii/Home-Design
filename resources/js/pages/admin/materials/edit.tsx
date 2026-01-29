@@ -30,7 +30,9 @@ interface Props {
 
 export default function MaterialEdit({ material, categories, types, units }: Props) {
     const [imagePreview, setImagePreview] = useState<string | null>(
-        material.image ? `/storage/${material.image}` : null
+        material.image 
+            ? (material.image.startsWith('http') ? material.image : `/storage/${material.image}`)
+            : null
     );
     const [availableTypes, setAvailableTypes] = useState<string[]>(types[material.category] || []);
 

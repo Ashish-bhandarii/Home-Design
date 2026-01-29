@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cart;
+use App\Models\Furniture;
+use App\Models\Material;
 use App\Models\Order;
 use App\Models\OrderItem;
 use Illuminate\Http\Request;
@@ -33,11 +35,11 @@ class OrderController extends Controller
                 if ($item->cartable_type === 'App\\Models\\Furniture') {
                     $price = $cartable->price ?? 0;
                     $name = $cartable->name;
-                    $image = $cartable->image ? '/storage/' . $cartable->image : null;
+                    $image = $cartable->image ? (str_starts_with($cartable->image, 'http') ? $cartable->image : '/storage/' . $cartable->image) : null;
                 } elseif ($item->cartable_type === 'App\\Models\\Material') {
                     $price = $cartable->price_per_unit ?? 0;
                     $name = $cartable->name;
-                    $image = $cartable->image ? '/storage/' . $cartable->image : null;
+                    $image = $cartable->image ? (str_starts_with($cartable->image, 'http') ? $cartable->image : '/storage/' . $cartable->image) : null;
                 }
 
                 return [
@@ -105,6 +107,16 @@ class OrderController extends Controller
         try {
             DB::beginTransaction();
 
+            // Validate stock availability first
+            foreach ($cartItems as $item) {
+                $cartable = $item->cartable;
+                if (!$cartable) continue;
+
+                if ($cartable->stock < $item->quantity) {
+                    return back()->with('error', "Insufficient stock for {$cartable->name}. Only {$cartable->stock} available.");
+                }
+            }
+
             // Calculate totals
             $subtotal = 0;
             $orderItems = [];
@@ -170,9 +182,24 @@ class OrderController extends Controller
                 'payment_status' => 'pending',
             ]);
 
-            // Create order items
+            // Create order items and decrement stock
             foreach ($orderItems as $item) {
                 $order->items()->create($item);
+
+                // Decrement stock for the ordered item
+                if ($item['orderable_type'] === 'App\\Models\\Furniture') {
+                    $furniture = Furniture::find($item['orderable_id']);
+                    if ($furniture && $furniture->stock !== null) {
+                        $furniture->stock = max(0, $furniture->stock - $item['quantity']);
+                        $furniture->save();
+                    }
+                } elseif ($item['orderable_type'] === 'App\\Models\\Material') {
+                    $material = Material::find($item['orderable_id']);
+                    if ($material && $material->stock !== null) {
+                        $material->stock = max(0, $material->stock - $item['quantity']);
+                        $material->save();
+                    }
+                }
             }
 
             // Clear cart
@@ -218,7 +245,7 @@ class OrderController extends Controller
                 'items' => $order->items->map(fn($item) => [
                     'id' => $item->id,
                     'name' => $item->name,
-                    'image' => $item->image ? '/storage/' . $item->image : null,
+                    'image' => $item->image ? (str_starts_with($item->image, 'http') ? $item->image : '/storage/' . $item->image) : null,
                     'price' => $item->price,
                     'quantity' => $item->quantity,
                     'total' => $item->total,
@@ -286,7 +313,7 @@ class OrderController extends Controller
                     'id' => $item->id,
                     'name' => $item->name,
                     'description' => $item->description,
-                    'image' => $item->image ? '/storage/' . $item->image : null,
+                    'image' => $item->image ? (str_starts_with($item->image, 'http') ? $item->image : '/storage/' . $item->image) : null,
                     'price' => $item->price,
                     'quantity' => $item->quantity,
                     'total' => $item->total,
@@ -308,6 +335,24 @@ class OrderController extends Controller
         // Only allow cancellation for pending or confirmed orders
         if (!in_array($order->status, ['pending', 'confirmed'])) {
             return back()->with('error', 'This order cannot be cancelled as it is already being processed.');
+        }
+
+        // Restore stock for all items in the order
+        $order->load('items');
+        foreach ($order->items as $item) {
+            if ($item->orderable_type === 'App\\Models\\Furniture') {
+                $furniture = Furniture::find($item->orderable_id);
+                if ($furniture && $furniture->stock !== null) {
+                    $furniture->stock += $item->quantity;
+                    $furniture->save();
+                }
+            } elseif ($item->orderable_type === 'App\\Models\\Material') {
+                $material = Material::find($item->orderable_id);
+                if ($material && $material->stock !== null) {
+                    $material->stock += $item->quantity;
+                    $material->save();
+                }
+            }
         }
 
         $order->update([

@@ -2,16 +2,16 @@ import AdminLayout from '@/layouts/admin-layout';
 import admin from '@/routes/admin';
 import { Head, Link, router } from '@inertiajs/react';
 import {
-    CheckCircle,
-    ChevronLeft,
-    ChevronRight,
-    Edit,
-    Mail,
-    Search,
-    Shield,
-    ShieldAlert,
-    Trash2,
-    User as UserIcon
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Edit,
+  Mail,
+  Search,
+  Shield,
+  ShieldAlert,
+  Trash2,
+  User as UserIcon
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -49,7 +49,10 @@ export default function AdminUsersIndex({ users, filters }: Props) {
 
   const handleDelete = (id: number) => {
     if (confirm('Are you sure you want to delete this user?')) {
-      router.delete(admin.users.destroy({ user: id }));
+      router.delete(admin.users.destroy({ user: id }), {
+        preserveScroll: true,
+        preserveState: false,
+      });
     }
   };
 

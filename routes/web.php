@@ -16,12 +16,29 @@ use App\Http\Controllers\FloorPlanProjectController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\User\FurnitureController as UserFurnitureController;
 use App\Http\Controllers\User\MaterialsController as UserMaterialsController;
+use App\Http\Controllers\DesignerBookingController;
+
+// CSRF token refresh endpoint
+Route::get('/csrf-token', function () {
+    return response()->json(['csrf_token' => csrf_token()]);
+})->name('csrf.token');
 
 Route::get('/', [LandingController::class, 'index'])->name('home');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'redirect.admin'])->group(function () {
     Route::get('dashboard', function () {
-        return Inertia::render('user/dashboard');
+        $upcomingBookings = \App\Models\DesignerBooking::where('user_id', Auth::id())
+            ->where('booking_date', '>=', now()->toDateString())
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->with(['designer:id,name,email,specialty,avatar'])
+            ->orderBy('booking_date')
+            ->orderBy('booking_time')
+            ->take(5)
+            ->get(['id', 'user_id', 'designer_id', 'booking_date', 'booking_time', 'consultation_type', 'status', 'project_type', 'description', 'meeting_link']);
+
+        return Inertia::render('user/dashboard', [
+            'upcomingBookings' => $upcomingBookings,
+        ]);
     })->name('dashboard');
 
     Route::get('floor-plan', function () {
@@ -150,20 +167,50 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('user/measurements');
     })->name('tools.measurements');
 
-    Route::get('admin', function () {
+    // Designer Booking Routes
+    Route::get('designers', [DesignerBookingController::class, 'index'])->name('designers');
+    Route::get('designers/{designer}', [DesignerBookingController::class, 'show'])->name('designers.show');
+    Route::post('designers/book', [DesignerBookingController::class, 'store'])->name('designers.book');
+    Route::get('my-bookings', [DesignerBookingController::class, 'myBookings'])->name('my-bookings');
+    Route::post('my-bookings/{booking}/cancel', [DesignerBookingController::class, 'cancel'])->name('bookings.cancel');
+});
+
+// Designer routes - separate panel for designers
+Route::middleware(['auth', 'verified', 'designer'])->prefix('designer')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Designer\DashboardController::class, 'index'])->name('designer.dashboard');
+    
+    // Designer Bookings Management
+    Route::get('/bookings', [\App\Http\Controllers\Designer\BookingController::class, 'index'])->name('designer.bookings');
+    Route::get('/bookings/{booking}', [\App\Http\Controllers\Designer\BookingController::class, 'show'])->name('designer.bookings.show');
+    Route::post('/bookings/{booking}/confirm', [\App\Http\Controllers\Designer\BookingController::class, 'confirm'])->name('designer.bookings.confirm');
+    Route::post('/bookings/{booking}/complete', [\App\Http\Controllers\Designer\BookingController::class, 'complete'])->name('designer.bookings.complete');
+    Route::post('/bookings/{booking}/cancel', [\App\Http\Controllers\Designer\BookingController::class, 'cancel'])->name('designer.bookings.cancel');
+    Route::patch('/bookings/{booking}/notes', [\App\Http\Controllers\Designer\BookingController::class, 'updateNotes'])->name('designer.bookings.notes');
+    
+    // Designer Profile
+    Route::get('/profile', [\App\Http\Controllers\Designer\ProfileController::class, 'index'])->name('designer.profile');
+    Route::post('/profile', [\App\Http\Controllers\Designer\ProfileController::class, 'update'])->name('designer.profile.update');
+    Route::post('/profile/avatar', [\App\Http\Controllers\Designer\ProfileController::class, 'uploadAvatar'])->name('designer.profile.avatar');
+    Route::post('/profile/availability', [\App\Http\Controllers\Designer\ProfileController::class, 'toggleAvailability'])->name('designer.profile.toggle-availability');
+    Route::post('/profile/availability-settings', [\App\Http\Controllers\Designer\ProfileController::class, 'updateAvailability'])->name('designer.profile.availability-settings');
+});
+
+// Admin routes - separate group without redirect.admin middleware
+Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->group(function () {
+    Route::get('/', function () {
         return Inertia::render('admin/dashboard');
-    })->middleware('admin')->name('admin.dashboard');
+    })->name('admin.dashboard');
 
-    Route::get('admin/analytics', [\App\Http\Controllers\Admin\AnalyticsController::class, 'index'])
-        ->middleware('admin')->name('admin.analytics');
+    Route::get('/analytics', [\App\Http\Controllers\Admin\AnalyticsController::class, 'index'])
+        ->name('admin.analytics');
 
-    Route::get('admin/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])
-        ->middleware('admin')->name('admin.settings');
-    Route::post('admin/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])
-        ->middleware('admin')->name('admin.settings.update');
+    Route::get('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])
+        ->name('admin.settings');
+    Route::post('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])
+        ->name('admin.settings.update');
 
     // Admin Home Designs Management
-    Route::middleware('admin')->prefix('admin/home-designs')->name('admin.home-designs.')->group(function () {
+    Route::prefix('home-designs')->name('admin.home-designs.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\HomeDesignsController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Admin\HomeDesignsController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\Admin\HomeDesignsController::class, 'store'])->name('store');
@@ -177,7 +224,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Admin Interior Designs Management
-    Route::middleware('admin')->prefix('admin/interior-designs')->name('admin.interior-designs.')->group(function () {
+    Route::prefix('interior-designs')->name('admin.interior-designs.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\InteriorDesignsController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Admin\InteriorDesignsController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\Admin\InteriorDesignsController::class, 'store'])->name('store');
@@ -191,7 +238,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Admin Users
-    Route::middleware('admin')->prefix('admin/users')->name('admin.users.')->group(function () {
+    Route::prefix('users')->name('admin.users.')->group(function () {
         Route::get('/', [UsersController::class, 'index'])->name('index');
         Route::get('/{user}/edit', [UsersController::class, 'edit'])->name('edit');
         Route::put('/{user}', [UsersController::class, 'update'])->name('update');
@@ -199,7 +246,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Admin Furniture Library
-    Route::middleware('admin')->prefix('admin/furniture')->name('admin.furniture.')->group(function () {
+    Route::prefix('furniture')->name('admin.furniture.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\FurnitureController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Admin\FurnitureController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\Admin\FurnitureController::class, 'store'])->name('store');
@@ -211,7 +258,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Admin Materials
-    Route::middleware('admin')->prefix('admin/materials')->name('admin.materials.')->group(function () {
+    Route::prefix('materials')->name('admin.materials.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\MaterialsController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Admin\MaterialsController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\Admin\MaterialsController::class, 'store'])->name('store');
@@ -223,12 +270,44 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Admin Orders Management
-    Route::middleware('admin')->prefix('admin/orders')->name('admin.orders.')->group(function () {
+    Route::prefix('orders')->name('admin.orders.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\OrderController::class, 'index'])->name('index');
         Route::get('/{order}', [\App\Http\Controllers\Admin\OrderController::class, 'show'])->name('show');
         Route::patch('/{order}/status', [\App\Http\Controllers\Admin\OrderController::class, 'updateStatus'])->name('update-status');
         Route::patch('/{order}/payment-status', [\App\Http\Controllers\Admin\OrderController::class, 'updatePaymentStatus'])->name('update-payment-status');
         Route::delete('/{order}', [\App\Http\Controllers\Admin\OrderController::class, 'destroy'])->name('destroy');
+    });
+
+    // Admin Designers Management
+    Route::prefix('designers')->name('admin.designers.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\DesignerController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Admin\DesignerController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Admin\DesignerController::class, 'store'])->name('store');
+        Route::get('/{designer}/edit', [\App\Http\Controllers\Admin\DesignerController::class, 'edit'])->name('edit');
+        Route::put('/{designer}', [\App\Http\Controllers\Admin\DesignerController::class, 'update'])->name('update');
+        Route::delete('/{designer}', [\App\Http\Controllers\Admin\DesignerController::class, 'destroy'])->name('destroy');
+        Route::post('/{designer}/avatar', [\App\Http\Controllers\Admin\DesignerController::class, 'uploadAvatar'])->name('avatar');
+        Route::post('/{designer}/toggle-availability', [\App\Http\Controllers\Admin\DesignerController::class, 'toggleAvailability'])->name('toggle-availability');
+        Route::post('/{designer}/availability', [\App\Http\Controllers\Admin\DesignerController::class, 'updateAvailability'])->name('availability');
+    });
+
+    // Admin Bookings Management
+    Route::prefix('bookings')->name('admin.bookings.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\BookingController::class, 'index'])->name('index');
+        Route::get('/{booking}', [\App\Http\Controllers\Admin\BookingController::class, 'show'])->name('show');
+        Route::patch('/{booking}/status', [\App\Http\Controllers\Admin\BookingController::class, 'updateStatus'])->name('update-status');
+        Route::delete('/{booking}', [\App\Http\Controllers\Admin\BookingController::class, 'destroy'])->name('destroy');
+    });
+
+    // Admin Notifications
+    Route::prefix('notifications')->name('admin.notifications.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\NotificationController::class, 'index'])->name('index');
+        Route::get('/recent', [\App\Http\Controllers\Admin\NotificationController::class, 'recent'])->name('recent');
+        Route::get('/unread-count', [\App\Http\Controllers\Admin\NotificationController::class, 'unreadCount'])->name('unread-count');
+        Route::post('/{notification}/read', [\App\Http\Controllers\Admin\NotificationController::class, 'markAsRead'])->name('mark-read');
+        Route::post('/mark-all-read', [\App\Http\Controllers\Admin\NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+        Route::delete('/{notification}', [\App\Http\Controllers\Admin\NotificationController::class, 'destroy'])->name('destroy');
+        Route::delete('/', [\App\Http\Controllers\Admin\NotificationController::class, 'clearAll'])->name('clear-all');
     });
 });
 
@@ -237,3 +316,16 @@ require __DIR__.'/settings.php';
 // Google OAuth
 Route::get('/auth/google/redirect', [\App\Http\Controllers\Auth\GoogleController::class, 'redirect'])->name('oauth.google.redirect');
 Route::get('/auth/google/callback', [\App\Http\Controllers\Auth\GoogleController::class, 'callback'])->name('oauth.google.callback');
+
+// Public pages
+Route::get('about', function () {
+    return Inertia::render('about');
+})->name('about');
+
+Route::get('privacy-policy', function () {
+    return Inertia::render('privacy-policy');
+})->name('privacy-policy');
+
+Route::get('terms', function () {
+    return Inertia::render('terms');
+})->name('terms');

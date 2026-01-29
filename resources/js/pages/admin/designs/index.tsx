@@ -84,16 +84,25 @@ export default function DesignsIndex({ designs, filters }: Props) {
 
     const handleDelete = (id: number) => {
         if (confirm('Are you sure you want to delete this design?')) {
-            router.delete(`/admin/designs/${id}`);
+            router.delete(`/admin/designs/${id}`, {
+                preserveScroll: true,
+                preserveState: false,
+            });
         }
     };
 
     const toggleFeatured = (id: number) => {
-        router.post(`/admin/designs/${id}/toggle-featured`);
+        router.post(`/admin/designs/${id}/toggle-featured`, {}, {
+            preserveScroll: true,
+            preserveState: false,
+        });
     };
 
     const toggleActive = (id: number) => {
-        router.post(`/admin/designs/${id}/toggle-active`);
+        router.post(`/admin/designs/${id}/toggle-active`, {}, {
+            preserveScroll: true,
+            preserveState: false,
+        });
     };
 
     return (

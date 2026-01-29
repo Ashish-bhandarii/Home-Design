@@ -44,6 +44,7 @@ class FurnitureController extends Controller
                     'material' => $item->material,
                     'color' => $item->color,
                     'stock' => $item->stock,
+                    'availability' => $item->computed_availability,
                     'isActive' => $item->is_active,
                     'isFeatured' => $item->is_featured,
                     'createdAt' => $item->created_at->format('Y-m-d'),
@@ -132,8 +133,8 @@ class FurnitureController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            // Delete old image
-            if ($furniture->image) {
+            // Delete old image only if it's a local file, not an external URL
+            if ($furniture->image && !str_starts_with($furniture->image, 'http')) {
                 Storage::disk('public')->delete($furniture->image);
             }
             $validated['image'] = $request->file('image')->store('furniture', 'public');
@@ -146,11 +147,12 @@ class FurnitureController extends Controller
 
     public function destroy(Furniture $furniture)
     {
-        if ($furniture->image) {
+        // Delete image only if it's a local file, not an external URL
+        if ($furniture->image && !str_starts_with($furniture->image, 'http')) {
             Storage::disk('public')->delete($furniture->image);
         }
 
-        $furniture->delete();
+        $furniture->delete();;
 
         return redirect()->route('admin.furniture.index')->with('success', 'Furniture deleted successfully.');
     }

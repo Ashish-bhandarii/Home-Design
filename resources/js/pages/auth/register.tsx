@@ -145,7 +145,7 @@ export default function Register() {
 
                             <Button
                                 type="submit"
-                                className="mt-2 w-full h-11 bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 text-white font-semibold rounded-xl shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 transition-all hover:scale-[1.02]"
+                                className="mt-2 w-full h-11 rounded-lg bg-zinc-900 text-white font-semibold hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-500/20 transition-colors dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
                                 tabIndex={5}
                                 data-test="register-user-button"
                             >
@@ -154,15 +154,15 @@ export default function Register() {
                             </Button>
                             <p className="text-center text-[11px] text-zinc-500 dark:text-zinc-400">
                                 By creating an account, you agree to our
-                                <a href="#" className="ml-1 text-orange-500 hover:text-orange-600 underline underline-offset-4">Terms</a>
+                                <a href="#" className="ml-1 text-indigo-600 hover:text-indigo-700 underline underline-offset-4 dark:text-indigo-400 dark:hover:text-indigo-300">Terms</a>
                                 <span className="mx-1">and</span>
-                                <a href="#" className="text-orange-500 hover:text-orange-600 underline underline-offset-4">Privacy Policy</a>.
+                                <a href="#" className="text-indigo-600 hover:text-indigo-700 underline underline-offset-4 dark:text-indigo-400 dark:hover:text-indigo-300">Privacy Policy</a>.
                             </p>
                         </div>
 
                         <div className="text-center text-sm text-zinc-600 dark:text-zinc-400">
                             Already have an account?{' '}
-                            <TextLink href={login()} tabIndex={6} className="font-semibold text-orange-500 hover:text-orange-600">
+                            <TextLink href={login()} tabIndex={6} className="font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">
                                 Log in
                             </TextLink>
                         </div>

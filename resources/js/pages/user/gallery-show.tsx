@@ -105,6 +105,7 @@ export default function GalleryShow({ design }: Props) {
             wishlistable_type: 'App\\Models\\InteriorDesign',
         }, {
             preserveScroll: true,
+            preserveState: false,
         });
     };
 

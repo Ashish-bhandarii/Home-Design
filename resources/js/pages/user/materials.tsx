@@ -5,7 +5,7 @@ import { type BreadcrumbItem } from '@/types';
 import type { RoomApplication } from '@/types/interior-design';
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
-import { Blocks, Bookmark, Check, Filter, Hammer, Home, Layers, PaintBucket, Palette, RefreshCw, Search, ShoppingCart, Sparkles, Star } from 'lucide-react';
+import { Blocks, Bookmark, Check, Filter, Hammer, Home, Layers, PaintBucket, Palette, RefreshCw, Search, Sparkles, Star } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -212,8 +212,6 @@ export default function MaterialsLibrary({ materials = [], categories = [], type
     const [selectedMaterial, setSelectedMaterial] = useState<any>(null);
     const [savedMaterialIds, setSavedMaterialIds] = useState<number[]>([]);
     const [savingMaterialId, setSavingMaterialId] = useState<number | null>(null);
-    const [cartMaterialIds, setCartMaterialIds] = useState<number[]>([]);
-    const [addingToCartId, setAddingToCartId] = useState<number | null>(null);
 
     const colorPalettes = STATIC_INTERIOR_CATALOG.materials;
 
@@ -227,16 +225,7 @@ export default function MaterialsLibrary({ materials = [], categories = [], type
                 console.error('Failed to load saved materials:', error);
             }
         };
-        const loadCartMaterials = async () => {
-            try {
-                const response = await axios.get('/api/cart/material-ids');
-                setCartMaterialIds(response.data.ids || []);
-            } catch (error) {
-                console.error('Failed to load cart materials:', error);
-            }
-        };
         loadSavedMaterials();
-        loadCartMaterials();
     }, []);
 
     // Toggle save material
@@ -263,54 +252,6 @@ export default function MaterialsLibrary({ materials = [], categories = [], type
             showToast('Failed to update wishlist', 'error');
         } finally {
             setSavingMaterialId(null);
-        }
-    };
-
-    // Add to cart
-    const addToCart = async (e: React.MouseEvent, materialId: number, materialName: string, stock?: number, availability?: string) => {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        // Check if out of stock - only block if availability is explicitly "Out of Stock"
-        // "In Stock" and "Limited Stock" should always allow adding to cart
-        if (availability === 'Out of Stock') {
-            showToast('This item is out of stock', 'error');
-            return;
-        }
-        
-        if (cartMaterialIds.includes(materialId)) {
-            // Already in cart, remove it
-            setAddingToCartId(materialId);
-            try {
-                await axios.post('/api/cart/remove', {
-                    cartable_id: materialId,
-                    cartable_type: 'App\\Models\\Material'
-                });
-                setCartMaterialIds(prev => prev.filter(id => id !== materialId));
-                showToast(`${materialName} removed from cart`, 'info');
-            } catch (error) {
-                console.error('Failed to remove from cart:', error);
-                showToast('Failed to remove from cart', 'error');
-            } finally {
-                setAddingToCartId(null);
-            }
-        } else {
-            // Add to cart
-            setAddingToCartId(materialId);
-            try {
-                await axios.post('/api/cart/add', {
-                    cartable_id: materialId,
-                    cartable_type: 'App\\Models\\Material'
-                });
-                setCartMaterialIds(prev => [...prev, materialId]);
-                showToast(`${materialName} added to cart`, 'success');
-            } catch (error: any) {
-                console.error('Failed to add to cart:', error);
-                const message = error.response?.data?.message || 'Failed to add to cart';
-                showToast(message, 'error');
-            } finally {
-                setAddingToCartId(null);
-            }
         }
     };
     
@@ -342,8 +283,8 @@ export default function MaterialsLibrary({ materials = [], categories = [], type
                 description: m.description || '',
                 pricePerUnit: m.price_per_unit > 0 ? `NPR ${m.price_per_unit.toLocaleString()} per ${m.unit}` : 'Contact for price',
                 unit: m.unit,
-                image: m.image ? `/storage/${m.image}` : null,
-                thumbnail: m.image ? `/storage/${m.image}` : null,
+                image: m.image ? (m.image.startsWith('http') ? m.image : `/storage/${m.image}`) : null,
+                thumbnail: m.image ? (m.image.startsWith('http') ? m.image : `/storage/${m.image}`) : null,
                 color: m.color,
                 brand: m.brand,
                 specifications: m.specifications,
@@ -745,50 +686,22 @@ export default function MaterialsLibrary({ materials = [], categories = [], type
                                             ))}
                                         </div>
 
-                                        {/* Stock Info */}
-                                        {numericId && material.availability === 'Made to Order' ? (
-                                            <p className="mt-2 text-xs text-blue-600 dark:text-blue-400">
-                                                Made to order • 2-4 weeks delivery
+                                        {/* Stock Info - computed from backend */}
+                                        {numericId && material.availability === 'Out of Stock' ? (
+                                            <p className="mt-2 text-xs font-medium text-red-500">
+                                                Out of Stock
                                             </p>
                                         ) : numericId && material.availability === 'Limited Stock' ? (
                                             <p className="mt-2 text-xs text-orange-600 dark:text-orange-400">
-                                                Limited Stock
-                                            </p>
-                                        ) : numericId && material.availability === 'In Stock' && material.stock > 0 && material.stock <= 5 ? (
-                                            <p className="mt-2 text-xs text-orange-600 dark:text-orange-400">
-                                                Only {material.stock} left in stock
+                                                {material.stock !== null && material.stock !== undefined 
+                                                    ? `Only ${material.stock} left in stock` 
+                                                    : 'Limited Stock'}
                                             </p>
                                         ) : null}
 
                                         {/* Action Buttons */}
                                         <div className="mt-4 flex gap-2">
-                                            {numericId && material.availability === 'Out of Stock' ? (
-                                                <span className="flex-1 flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-semibold bg-zinc-200 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400 cursor-not-allowed">
-                                                    Out of Stock
-                                                </span>
-                                            ) : numericId ? (
-                                                <button 
-                                                    onClick={(e) => addToCart(e, numericId, material.name, material.stock, material.availability)}
-                                                    disabled={addingToCartId === numericId}
-                                                    className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-semibold transition-all ${
-                                                        cartMaterialIds.includes(numericId)
-                                                            ? 'bg-green-500 text-white hover:bg-green-600'
-                                                            : material.availability === 'Made to Order'
-                                                            ? 'bg-blue-500 text-white hover:bg-blue-600'
-                                                            : 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700'
-                                                    }`}
-                                                >
-                                                    {addingToCartId === numericId ? (
-                                                        <RefreshCw className="h-4 w-4 animate-spin" />
-                                                    ) : cartMaterialIds.includes(numericId) ? (
-                                                        <Check className="h-4 w-4" />
-                                                    ) : (
-                                                        <ShoppingCart className="h-4 w-4" />
-                                                    )}
-                                                    {cartMaterialIds.includes(numericId) ? 'In Cart' : material.availability === 'Made to Order' ? 'Pre-Order' : 'Add to Cart'}
-                                                </button>
-                                            ) : null}
-                                            <button className={`${numericId ? 'flex-1' : 'w-full'} rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 py-2 text-sm font-semibold text-white transition-all hover:from-purple-600 hover:to-purple-700 hover:shadow-lg`}>
+                                            <button className="w-full rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 py-2 text-sm font-semibold text-white transition-all hover:from-purple-600 hover:to-purple-700 hover:shadow-lg">
                                                 View Details
                                             </button>
                                         </div>

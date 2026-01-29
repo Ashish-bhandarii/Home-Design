@@ -91,18 +91,23 @@ export default function HomeDesignsIndex({ designs, filters, styleOptions }: Pro
     const toggleFeatured = (id: number) => {
         router.post(admin.homeDesigns.toggleFeatured({ homeDesign: id }).url, {}, {
             preserveScroll: true,
+            preserveState: false,
         });
     };
 
     const toggleActive = (id: number) => {
         router.post(admin.homeDesigns.toggleActive({ homeDesign: id }).url, {}, {
             preserveScroll: true,
+            preserveState: false,
         });
     };
 
     const deleteDesign = (id: number) => {
         if (confirm('Are you sure you want to delete this design?')) {
-            router.delete(admin.homeDesigns.destroy({ homeDesign: id }).url);
+            router.delete(admin.homeDesigns.destroy({ homeDesign: id }).url, {
+                preserveScroll: true,
+                preserveState: false,
+            });
         }
     };
 

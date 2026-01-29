@@ -58,3 +58,17 @@ export interface User {
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
 }
+
+export interface AdminNotification {
+    id: number;
+    type: 'order' | 'user' | 'design' | 'system';
+    title: string;
+    message: string;
+    icon: string | null;
+    color: string;
+    link: string | null;
+    data: Record<string, unknown> | null;
+    read_at: string | null;
+    created_at: string;
+    updated_at: string;
+}

@@ -157,6 +157,7 @@ export default function DesignHomeShow({ design }: Props) {
             wishlistable_type: 'App\\Models\\HomeDesign',
         }, {
             preserveScroll: true,
+            preserveState: false,
         });
     };
 

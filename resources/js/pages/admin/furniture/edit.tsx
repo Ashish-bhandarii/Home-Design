@@ -29,7 +29,9 @@ interface Props {
 
 export default function FurnitureEdit({ furniture, categories, rooms }: Props) {
     const [imagePreview, setImagePreview] = useState<string | null>(
-        furniture.image ? `/storage/${furniture.image}` : null
+        furniture.image 
+            ? (furniture.image.startsWith('http') ? furniture.image : `/storage/${furniture.image}`)
+            : null
     );
 
     const { data, setData, post, processing, errors } = useForm({

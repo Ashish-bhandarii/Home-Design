@@ -257,6 +257,7 @@ export default function Checkout({ cartItems, subtotal, tax, shipping, total, us
                                             </p>
                                         </div>
                                     </label>
+                                    {/* Bank Transfer - Temporarily Disabled
                                     <label className={`flex cursor-pointer items-center gap-4 rounded-xl border-2 p-4 transition-colors ${data.payment_method === 'bank_transfer' ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20' : 'border-zinc-200 hover:border-zinc-300 dark:border-zinc-700 dark:hover:border-zinc-600'}`}>
                                         <input
                                             type="radio"
@@ -278,6 +279,7 @@ export default function Checkout({ cartItems, subtotal, tax, shipping, total, us
                                             </p>
                                         </div>
                                     </label>
+                                    */}
                                 </div>
                             </div>
 
@@ -317,12 +319,15 @@ export default function Checkout({ cartItems, subtotal, tax, shipping, total, us
                                                             src={item.image}
                                                             alt={item.name}
                                                             className="h-full w-full object-cover"
+                                                            onError={(e) => {
+                                                                e.currentTarget.style.display = 'none';
+                                                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                                            }}
                                                         />
-                                                    ) : (
-                                                        <div className="flex h-full items-center justify-center">
-                                                            <ShoppingBag className="h-6 w-6 text-zinc-400" />
-                                                        </div>
-                                                    )}
+                                                    ) : null}
+                                                    <div className={`flex h-full items-center justify-center ${item.image ? 'hidden' : ''}`}>
+                                                        <ShoppingBag className="h-6 w-6 text-zinc-400" />
+                                                    </div>
                                                     <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-xs font-medium text-white">
                                                         {item.quantity}
                                                     </span>

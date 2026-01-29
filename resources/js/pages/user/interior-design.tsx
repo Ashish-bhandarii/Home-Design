@@ -77,13 +77,107 @@ interface InteriorDesignProject {
 
 type ViewMode = '2d' | '3d'
 
+// Simple 2D Room Shape SVG Components - Floor plan style
+// Shape 1: Simple square room
+const RoomShapeSquare1 = ({ className }: { className?: string }) => (
+    <svg viewBox="0 0 60 60" className={className} xmlns="http://www.w3.org/2000/svg">
+        <rect x="8" y="8" width="44" height="44" fill="#cbd5e1" stroke="#64748b" strokeWidth="2" rx="2"/>
+    </svg>
+)
+
+// Shape 2: Rectangle (horizontal)
+const RoomShapeSquare2 = ({ className }: { className?: string }) => (
+    <svg viewBox="0 0 60 60" className={className} xmlns="http://www.w3.org/2000/svg">
+        <rect x="5" y="15" width="50" height="30" fill="#cbd5e1" stroke="#64748b" strokeWidth="2" rx="2"/>
+    </svg>
+)
+
+// Shape 3: Rectangle (vertical)
+const RoomShapeSquare3 = ({ className }: { className?: string }) => (
+    <svg viewBox="0 0 60 60" className={className} xmlns="http://www.w3.org/2000/svg">
+        <rect x="15" y="5" width="30" height="50" fill="#cbd5e1" stroke="#64748b" strokeWidth="2" rx="2"/>
+    </svg>
+)
+
+// Shape 4: L-shaped room (facing bottom-right)
+const RoomShapeLRight = ({ className }: { className?: string }) => (
+    <svg viewBox="0 0 60 60" className={className} xmlns="http://www.w3.org/2000/svg">
+        <polygon points="8,8 35,8 35,30 52,30 52,52 8,52" fill="#cbd5e1" stroke="#64748b" strokeWidth="2" strokeLinejoin="round"/>
+    </svg>
+)
+
+// Shape 5: L-shaped room (facing bottom-left)
+const RoomShapeLLeft = ({ className }: { className?: string }) => (
+    <svg viewBox="0 0 60 60" className={className} xmlns="http://www.w3.org/2000/svg">
+        <polygon points="52,8 52,52 8,52 8,30 25,30 25,8" fill="#cbd5e1" stroke="#64748b" strokeWidth="2" strokeLinejoin="round"/>
+    </svg>
+)
+
+// Shape 6: L-shaped room (facing top-right)
+const RoomShapeLCorner = ({ className }: { className?: string }) => (
+    <svg viewBox="0 0 60 60" className={className} xmlns="http://www.w3.org/2000/svg">
+        <polygon points="8,52 8,8 30,8 30,30 52,30 52,52" fill="#cbd5e1" stroke="#64748b" strokeWidth="2" strokeLinejoin="round"/>
+    </svg>
+)
+
+// Shape type definition
+type RoomShapeId = 'square' | 'rect-h' | 'rect-v' | 'l-right' | 'l-left' | 'l-corner'
+
 const ROOM_TYPES = [
-    { id: 'living', name: 'Living Room', icon: Sofa, width: 5, length: 5 },
-    { id: 'bedroom', name: 'Bedroom', icon: Lamp, width: 4, length: 4 },
-    { id: 'kitchen', name: 'Kitchen', icon: Grid3X3, width: 3.5, length: 4 },
-    { id: 'bathroom', name: 'Bathroom', icon: Square, width: 2.5, length: 3 },
-    { id: 'dining', name: 'Dining Room', icon: Users, width: 4, length: 3.5 },
+    { id: 'T1', name: 'T1', shapeId: 'square' as RoomShapeId, icon: Sofa, shape: RoomShapeSquare1, width: 5, length: 5 },
+    { id: 'T2', name: 'T2', shapeId: 'rect-h' as RoomShapeId, icon: Lamp, shape: RoomShapeSquare2, width: 5, length: 3 },
+    { id: 'T3', name: 'T3', shapeId: 'rect-v' as RoomShapeId, icon: Square, shape: RoomShapeSquare3, width: 3, length: 5 },
+    { id: 'T4', name: 'T4', shapeId: 'l-right' as RoomShapeId, icon: Grid3X3, shape: RoomShapeLRight, width: 5, length: 5 },
+    { id: 'T5', name: 'T5', shapeId: 'l-left' as RoomShapeId, icon: Users, shape: RoomShapeLLeft, width: 5, length: 5 },
+    { id: 'T6', name: 'T6', shapeId: 'l-corner' as RoomShapeId, icon: Monitor, shape: RoomShapeLCorner, width: 5, length: 5 },
 ]
+
+// Get SVG path for room shape based on shapeId
+const getRoomShapePath = (shapeId: RoomShapeId, width: number, height: number): string => {
+    switch (shapeId) {
+        case 'square':
+            return `M 0 0 L ${width} 0 L ${width} ${height} L 0 ${height} Z`
+        case 'rect-h':
+            return `M 0 0 L ${width} 0 L ${width} ${height} L 0 ${height} Z`
+        case 'rect-v':
+            return `M 0 0 L ${width} 0 L ${width} ${height} L 0 ${height} Z`
+        case 'l-right':
+            // L-shape opening to bottom-right: main area top-left, extension bottom-right
+            const lrCutX = width * 0.55
+            const lrCutY = height * 0.45
+            return `M 0 0 L ${lrCutX} 0 L ${lrCutX} ${lrCutY} L ${width} ${lrCutY} L ${width} ${height} L 0 ${height} Z`
+        case 'l-left':
+            // L-shape opening to bottom-left: main area top-right, extension bottom-left  
+            const llCutX = width * 0.45
+            const llCutY = height * 0.45
+            return `M ${llCutX} 0 L ${width} 0 L ${width} ${height} L 0 ${height} L 0 ${llCutY} L ${llCutX} ${llCutY} Z`
+        case 'l-corner':
+            // L-shape opening to top-right: main area bottom-left, extension top-right
+            const lcCutX = width * 0.45
+            const lcCutY = height * 0.55
+            return `M 0 0 L ${lcCutX} 0 L ${lcCutX} ${lcCutY} L ${width} ${lcCutY} L ${width} ${height} L 0 ${height} Z`
+        default:
+            return `M 0 0 L ${width} 0 L ${width} ${height} L 0 ${height} Z`
+    }
+}
+
+// Get clip path polygon for room shape
+const getRoomClipPath = (shapeId: RoomShapeId): string => {
+    switch (shapeId) {
+        case 'square':
+        case 'rect-h':
+        case 'rect-v':
+            return 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)'
+        case 'l-right':
+            return 'polygon(0% 0%, 55% 0%, 55% 45%, 100% 45%, 100% 100%, 0% 100%)'
+        case 'l-left':
+            return 'polygon(45% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 45%, 45% 45%)'
+        case 'l-corner':
+            return 'polygon(0% 0%, 45% 0%, 45% 55%, 100% 55%, 100% 100%, 0% 100%)'
+        default:
+            return 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)'
+    }
+}
 
 // Room size limits in meters
 const ROOM_SIZE_LIMITS = {
@@ -243,6 +337,7 @@ export default function InteriorDesign({ project }: PageProps) {
     const [loadingProjects, setLoadingProjects] = useState(false)
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
     const canvasRef = useRef<HTMLDivElement>(null)
+    const threeCanvasRef = useRef<HTMLCanvasElement | null>(null)
 
     // Load project data when component mounts with a project prop
     useEffect(() => {
@@ -378,15 +473,8 @@ export default function InteriorDesign({ project }: PageProps) {
         setShowExportMenu(false)
     }
 
-    // Export as PNG (2D view)
+    // Export as PNG (2D or 3D view)
     const handleExportPNG = async () => {
-        // Ensure we're in 2D view
-        if (viewMode !== '2d') {
-            alert('Please switch to 2D view to export as PNG.')
-            setShowExportMenu(false)
-            return
-        }
-
         // Check if a room is selected
         if (!selectedRoomId || rooms.length === 0) {
             alert('Please select a room to export.')
@@ -394,32 +482,109 @@ export default function InteriorDesign({ project }: PageProps) {
             return
         }
 
-        const canvasElement = canvasRef.current
-        if (!canvasElement) {
-            alert('Could not find canvas element. Please try again.')
-            setShowExportMenu(false)
-            return
-        }
-
         try {
-            const html2canvas = (await import('html2canvas')).default
-            
-            const canvas = await html2canvas(canvasElement, {
-                background: '#1e293b',
-                scale: 1.5, // Use a slightly lower scale for better performance
-                logging: false,
-            } as any)
-            
-            const url = canvas.toDataURL('image/png')
-            const a = document.createElement('a')
-            a.href = url
-            a.download = `${currentProjectName || 'interior-design'}-2d-${Date.now()}.png`
-            document.body.appendChild(a)
-            a.click()
-            document.body.removeChild(a)
+            if (viewMode === '3d') {
+                // Export 3D view from Three.js canvas
+                const threeCanvas = threeCanvasRef.current
+                if (!threeCanvas) {
+                    alert('Could not find 3D canvas. Please try again.')
+                    setShowExportMenu(false)
+                    return
+                }
+                
+                // Get the data URL directly from the WebGL canvas
+                const url = threeCanvas.toDataURL('image/png', 1.0)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `${currentProjectName || 'interior-design'}-3d-${Date.now()}.png`
+                document.body.appendChild(a)
+                a.click()
+                document.body.removeChild(a)
+            } else {
+                // Export 2D view using html2canvas
+                const canvasElement = canvasRef.current
+                if (!canvasElement) {
+                    alert('Could not find canvas element. Please try again.')
+                    setShowExportMenu(false)
+                    return
+                }
+
+                // Show loading state
+                const loadingDiv = document.createElement('div')
+                loadingDiv.innerHTML = '<div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999"><div style="color:white;font-size:18px;">Generating image...</div></div>'
+                document.body.appendChild(loadingDiv)
+
+                try {
+                    const html2canvas = (await import('html2canvas')).default
+                    
+                    // Capture the entire canvas container
+                    const canvas = await html2canvas(canvasElement, {
+                        backgroundColor: '#1e293b',
+                        scale: 2,
+                        logging: false,
+                        useCORS: true,
+                        allowTaint: true,
+                        imageTimeout: 0,
+                        onclone: (clonedDoc: Document, element: HTMLElement) => {
+                            // Helper function to convert oklch colors to rgb
+                            const allElements = element.querySelectorAll('*')
+                            const elementsToProcess = [element, ...Array.from(allElements)] as HTMLElement[]
+                            
+                            elementsToProcess.forEach((el) => {
+                                if (!el.style) return
+                                try {
+                                    const computedStyle = window.getComputedStyle(el)
+                                    
+                                    // Get computed colors (browser converts oklch to rgb)
+                                    const bgColor = computedStyle.backgroundColor
+                                    const color = computedStyle.color
+                                    const borderColor = computedStyle.borderColor
+                                    
+                                    // Apply computed colors directly (these are in rgb format)
+                                    if (bgColor && bgColor !== 'transparent' && bgColor !== 'rgba(0, 0, 0, 0)') {
+                                        el.style.backgroundColor = bgColor
+                                    }
+                                    if (color) {
+                                        el.style.color = color
+                                    }
+                                    if (borderColor && borderColor !== 'transparent') {
+                                        el.style.borderColor = borderColor
+                                    }
+                                    
+                                    // Remove clip-path which html2canvas doesn't support
+                                    if (el.style.clipPath) {
+                                        el.style.clipPath = 'none'
+                                    }
+                                    
+                                    // Remove box-shadow with oklch
+                                    const boxShadow = computedStyle.boxShadow
+                                    if (boxShadow && boxShadow.includes('oklch')) {
+                                        el.style.boxShadow = 'none'
+                                    }
+                                    
+                                    // Force visibility
+                                    el.style.overflow = 'visible'
+                                } catch (e) {
+                                    // Skip elements that can't be processed
+                                }
+                            })
+                        }
+                    } as any)
+                    
+                    const url = canvas.toDataURL('image/png', 1.0)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = `${currentProjectName || 'interior-design'}-2d-${Date.now()}.png`
+                    document.body.appendChild(a)
+                    a.click()
+                    document.body.removeChild(a)
+                } finally {
+                    document.body.removeChild(loadingDiv)
+                }
+            }
         } catch (error) {
             console.error('Failed to export PNG:', error)
-            alert('Failed to export image. Please try again.')
+            alert('Failed to export image. Error: ' + (error as Error).message)
         } finally {
             setShowExportMenu(false)
         }
@@ -552,10 +717,12 @@ export default function InteriorDesign({ project }: PageProps) {
     }, [])
 
     const handleAddRoom = (preset: typeof ROOM_TYPES[0]) => {
+        const roomCount = rooms.length + 1
         const newRoom: InteriorRoom = {
             id: generateId(),
             templateId: 'living-room' as RoomTemplateId,
-            name: preset.name,
+            name: `Room ${roomCount}`,
+            shapeId: preset.shapeId,
             level: 0,
             width: preset.width,
             length: preset.length,
@@ -704,8 +871,7 @@ export default function InteriorDesign({ project }: PageProps) {
         
         // Check for collisions (skip for wall-mounted items as they're on walls)
         if (!isWallMountedFurniture(furniture) && !canPlaceFurniture(furnitureId, finalOffsetX, finalOffsetY, roomId)) {
-            // Could show a toast/notification here
-            console.log('Cannot place furniture - collision detected')
+            // Collision detected - silently skip placement
             return
         }
         
@@ -760,22 +926,24 @@ export default function InteriorDesign({ project }: PageProps) {
                             'overflow-hidden transition-all duration-300',
                             addRoomExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
                         )}>
-                            <div className="px-4 pb-4 grid grid-cols-2 gap-2">
-                                {ROOM_TYPES.map((room) => (
+                            <div className="px-3 pb-4 grid grid-cols-2 gap-3">
+                                {ROOM_TYPES.map((room) => {
+                                    const RoomShape = room.shape
+                                    return (
                                     <button
                                         key={room.id}
                                         onClick={() => {
                                             handleAddRoom(room)
                                             setAddRoomExpanded(false) // Collapse after adding
                                         }}
-                                        className="flex flex-col items-center gap-2 p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-orange-500/50 transition-all group"
+                                        className="flex items-center justify-center p-3 rounded-xl bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 hover:border-orange-400 transition-all group aspect-square"
                                     >
-                                        <div className="w-10 h-10 rounded-lg bg-slate-700 group-hover:bg-orange-500/20 flex items-center justify-center transition-colors">
-                                            <room.icon className="w-5 h-5 text-slate-400 group-hover:text-orange-400 transition-colors" />
+                                        <div className="w-full h-full flex items-center justify-center transition-all group-hover:scale-105">
+                                            <RoomShape className="w-full h-full drop-shadow-sm" />
                                         </div>
-                                        <span className="text-xs font-medium text-slate-300 group-hover:text-white transition-colors">{room.name}</span>
                                     </button>
-                                ))}
+                                    )
+                                })}
                             </div>
                         </div>
                     </div>
@@ -783,7 +951,8 @@ export default function InteriorDesign({ project }: PageProps) {
                     {/* When room is selected - Show Furniture & Room Settings */}
                     {selectedRoomId && rooms.find(r => r.id === selectedRoomId) && (() => {
                         const currentRoom = rooms.find(r => r.id === selectedRoomId)!
-                        const RoomIcon = ROOM_TYPES.find(r => r.name === currentRoom.name)?.icon || Square
+                        const roomType = ROOM_TYPES.find(r => r.shapeId === currentRoom.shapeId)
+                        const RoomShape = roomType?.shape || RoomShapeSquare1
                         
                         const updateRoomSize = (field: 'width' | 'length', value: number) => {
                             const clampedValue = clamp(
@@ -801,8 +970,8 @@ export default function InteriorDesign({ project }: PageProps) {
                                 {/* Current Room Header */}
                                 <div className="p-4 border-b border-slate-800">
                                     <div className="flex items-center gap-3 p-3 rounded-xl bg-orange-500/20 border border-orange-500/50">
-                                        <div className="w-10 h-10 rounded-lg bg-orange-500 flex items-center justify-center">
-                                            <RoomIcon className="w-5 h-5 text-white" />
+                                        <div className="w-12 h-10 flex items-center justify-center">
+                                            <RoomShape className="w-full h-full drop-shadow-sm" />
                                         </div>
                                         <div className="flex-1">
                                             <p className="font-medium text-sm text-orange-400">{currentRoom.name}</p>
@@ -1163,16 +1332,18 @@ export default function InteriorDesign({ project }: PageProps) {
                                                 <p className="text-xs text-slate-400">Save for later editing</p>
                                             </div>
                                         </button>
-                                        <button
-                                            onClick={handleExportPNG}
-                                            className="w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-700 text-left transition-colors border-t border-slate-700"
-                                        >
-                                            <ImageIcon className="w-4 h-4 text-green-400" />
-                                            <div>
-                                                <p className="text-sm text-white">Image (PNG)</p>
-                                                <p className="text-xs text-slate-400">2D Floor Plan Image</p>
-                                            </div>
-                                        </button>
+                                        {viewMode === '3d' && (
+                                            <button
+                                                onClick={handleExportPNG}
+                                                className="w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-700 text-left transition-colors border-t border-slate-700"
+                                            >
+                                                <ImageIcon className="w-4 h-4 text-green-400" />
+                                                <div>
+                                                    <p className="text-sm text-white">Image (PNG)</p>
+                                                    <p className="text-xs text-slate-400">3D View Image</p>
+                                                </div>
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -1199,7 +1370,7 @@ export default function InteriorDesign({ project }: PageProps) {
                     </div>
 
                     {/* Canvas */}
-                    <div className="flex-1 relative" ref={canvasRef}>
+                    <div className="flex-1 relative overflow-visible" ref={canvasRef}>
                         {viewMode === '2d' ? (
                             <GridCanvas
                                 room={rooms.find(r => r.id === selectedRoomId) || null}
@@ -1218,6 +1389,7 @@ export default function InteriorDesign({ project }: PageProps) {
                                 room={rooms.find(r => r.id === selectedRoomId) || null} 
                                 placements={placements.filter(p => p.roomId === selectedRoomId)}
                                 catalog={catalog}
+                                onCanvasReady={(canvas) => { threeCanvasRef.current = canvas }}
                             />
                         )}
                     </div>
@@ -1499,7 +1671,7 @@ function GridCanvas({ room, placements, onAddFurnitureAt, zoom, catalog, selecte
 
     return (
         <div 
-            className="w-full h-full relative overflow-hidden select-none bg-slate-900" 
+            className="w-full h-full relative select-none bg-slate-900" 
             style={{ cursor: draggingFurniture ? 'grabbing' : 'default' }}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -1507,40 +1679,65 @@ function GridCanvas({ room, placements, onAddFurnitureAt, zoom, catalog, selecte
         >
             {/* Grid Pattern */}
             <div 
-                className="absolute inset-0 opacity-20"
+                className="absolute inset-0 opacity-20 overflow-hidden"
                 style={{ 
                     backgroundImage: 'linear-gradient(#475569 1px, transparent 1px), linear-gradient(90deg, #475569 1px, transparent 1px)',
                     backgroundSize: '20px 20px'
                 }}
             />
             
-            <div ref={canvasRef} onDragOver={onDragOver} onDrop={onDrop} onClick={handleCanvasClick} className="absolute inset-0 flex items-center justify-center">
+            <div ref={canvasRef} onDragOver={onDragOver} onDrop={onDrop} onClick={handleCanvasClick} className="absolute inset-0 flex items-center justify-center p-16 overflow-visible">
                 {room ? (
-                    <div className="relative">
-                        {/* Room Container - Centered */}
+                    <div className="relative overflow-visible">
+                        {/* Room Container - SVG Shape Based */}
                         <div 
                             data-room
                             className="relative transition-all duration-300 overflow-visible"
                             style={{ 
                                 width: roomWidth, 
-                                height: roomHeight, 
-                                backgroundColor: room.floorColor || '#d4a574',
-                                border: `4px solid ${room.wallColor || '#FAF9F6'}`,
-                                borderRadius: '4px',
-                                boxShadow: '0 0 60px rgba(249, 115, 22, 0.3), inset 0 0 30px rgba(0,0,0,0.1)' 
+                                height: roomHeight,
                             }}
                         >
-                            {/* Wood grain pattern (only for wood-like colors) */}
-                            {(room.floorColor || '#d4a574').match(/#[89abcd]/i) && (
-                                <div 
-                                    className="absolute inset-0 opacity-30"
-                                    style={{
-                                        background: 'repeating-linear-gradient(90deg, transparent 0px, transparent 8px, rgba(139,90,43,0.3) 8px, rgba(139,90,43,0.3) 10px)'
-                                    }}
+                            {/* Room Shape SVG */}
+                            <svg 
+                                className="absolute inset-0 w-full h-full"
+                                viewBox={`0 0 ${roomWidth} ${roomHeight}`}
+                                preserveAspectRatio="none"
+                                style={{ filter: 'drop-shadow(0 0 60px rgba(249, 115, 22, 0.3))' }}
+                            >
+                                <defs>
+                                    <clipPath id={`room-clip-${room.id}`}>
+                                        <path d={getRoomShapePath(room.shapeId || 'square', roomWidth, roomHeight)} />
+                                    </clipPath>
+                                </defs>
+                                {/* Floor */}
+                                <path 
+                                    d={getRoomShapePath(room.shapeId || 'square', roomWidth, roomHeight)} 
+                                    fill={room.floorColor || '#d4a574'}
+                                    stroke={room.wallColor || '#FAF9F6'}
+                                    strokeWidth="4"
                                 />
-                            )}
+                            </svg>
 
-                            {/* Furniture Items */}
+                            {/* Furniture container - clipped to room shape */}
+                            <div 
+                                className="absolute inset-0 overflow-visible"
+                                style={{ 
+                                    clipPath: getRoomClipPath(room.shapeId || 'square')
+                                }}
+                            >
+                                {/* Wood grain pattern (only for wood-like colors) */}
+                                {(room.floorColor || '#d4a574').match(/#[89abcd]/i) && (
+                                    <div 
+                                        className="absolute inset-0 opacity-30"
+                                        style={{
+                                            background: 'repeating-linear-gradient(90deg, transparent 0px, transparent 8px, rgba(139,90,43,0.3) 8px, rgba(139,90,43,0.3) 10px)'
+                                        }}
+                                    />
+                                )}
+                            </div>
+
+                            {/* Furniture Items - positioned relative to bounding box */}
                             {placements.map(p => {
                                 const furniture = catalog.furniture.find(f => f.id === p.furnitureId)
                                 const isSelectedFurniture = selectedFurnitureId === p.id
@@ -1550,6 +1747,7 @@ function GridCanvas({ room, placements, onAddFurnitureAt, zoom, catalog, selecte
                                 const isWallMountedOnly = furniture && isWallMountedFurniture(furniture) && !isDoorOrWindow
                                 const isWindow = furniture?.name.toLowerCase().includes('window') || furniture?.name.toLowerCase().includes('skylight')
                                 const isDoor = isDoorOrWindow && !isWindow
+                                const isAnyWallMounted = isDoorOrWindow || isWallMountedOnly
                                 
                                 // Calculate furniture size on canvas (proportional to room)
                                 const furnitureWidth = furniture ? (furniture.width / room.width) * roomWidth : 48
@@ -1559,7 +1757,7 @@ function GridCanvas({ room, placements, onAddFurnitureAt, zoom, catalog, selecte
                                 const displayWidth = Math.min(maxSize, Math.max(minSize, furnitureWidth))
                                 const displayHeight = Math.min(maxSize, Math.max(minSize, furnitureHeight))
                                 
-                                // For doors/windows - snap to nearest wall edge
+                                // For wall-mounted items - snap to nearest wall edge
                                 let posX = p.offsetX * 100
                                 let posY = p.offsetY * 100
                                 let wallPosition: 'top' | 'bottom' | 'left' | 'right' | null = null
@@ -1567,7 +1765,8 @@ function GridCanvas({ room, placements, onAddFurnitureAt, zoom, catalog, selecte
                                 // Door swing direction: rotation 0 = opens inward, rotation 180 = opens outward
                                 const opensInward = (p.rotation || 0) === 0
                                 
-                                if (isDoorOrWindow) {
+                                // Detect wall position for ALL wall-mounted items
+                                if (isAnyWallMounted) {
                                     // Determine which wall based on stored offset (already snapped)
                                     // Use threshold of 0.05 to detect wall position
                                     const nearTop = p.offsetY <= 0.05
@@ -1622,36 +1821,59 @@ function GridCanvas({ room, placements, onAddFurnitureAt, zoom, catalog, selecte
                                 const doorWidthPx = furniture ? (furniture.width / room.width) * roomWidth : 60
                                 const clampedDoorWidth = Math.min(100, Math.max(50, doorWidthPx))
                                 
-                                // Simplified positioning: doors/windows sit centered on the wall
+                                // Positioning for wall-mounted items
                                 let anchorX = '50%'
                                 let anchorY = '50%'
                                 let offsetStyle: React.CSSProperties = {}
                                 
-                                if (isDoorOrWindow) {
+                                // Handle all wall-mounted items (doors, windows, mirrors, paintings, etc.)
+                                // Items should be positioned AT the wall line and rendered INSIDE the room
+                                if (isAnyWallMounted && wallPosition) {
                                     if (wallPosition === 'top') {
                                         anchorX = '50%'
                                         anchorY = '0%'
-                                        // For doors opening inward, show arc inside room
-                                        offsetStyle = { 
-                                            marginTop: isDoor ? (opensInward ? -4 : -clampedDoorWidth + 4) : -8
+                                        if (isDoorOrWindow) {
+                                            offsetStyle = { 
+                                                marginTop: isDoor ? (opensInward ? -4 : -clampedDoorWidth + 4) : -8
+                                            }
+                                        } else {
+                                            // Wall-mounted furniture on top wall - sits just inside the wall
+                                            offsetStyle = { marginTop: 8 }
                                         }
                                     } else if (wallPosition === 'bottom') {
                                         anchorX = '50%'
-                                        anchorY = '100%'
-                                        offsetStyle = { 
-                                            marginTop: isDoor ? (opensInward ? -clampedDoorWidth + 4 : -4) : -8
+                                        anchorY = '0%' // Anchor at top of element
+                                        posY = 100 // Position at bottom
+                                        if (isDoorOrWindow) {
+                                            offsetStyle = { 
+                                                marginTop: isDoor ? (opensInward ? -clampedDoorWidth + 4 : -4) : -8
+                                            }
+                                        } else {
+                                            // Wall-mounted furniture on bottom wall - render above the wall line
+                                            offsetStyle = { marginTop: -(displayHeight + 8) }
                                         }
                                     } else if (wallPosition === 'left') {
                                         anchorX = '0%'
                                         anchorY = '50%'
-                                        offsetStyle = { 
-                                            marginLeft: isDoor ? (opensInward ? -4 : -clampedDoorWidth + 4) : -8
+                                        if (isDoorOrWindow) {
+                                            offsetStyle = { 
+                                                marginLeft: isDoor ? (opensInward ? -4 : -clampedDoorWidth + 4) : -8
+                                            }
+                                        } else {
+                                            // Wall-mounted furniture on left wall - sits just inside the wall
+                                            offsetStyle = { marginLeft: 8 }
                                         }
                                     } else if (wallPosition === 'right') {
-                                        anchorX = '100%'
+                                        anchorX = '0%' // Anchor at left of element
                                         anchorY = '50%'
-                                        offsetStyle = { 
-                                            marginLeft: isDoor ? (opensInward ? -clampedDoorWidth + 4 : -4) : -8
+                                        posX = 100 // Position at right edge
+                                        if (isDoorOrWindow) {
+                                            offsetStyle = { 
+                                                marginLeft: isDoor ? (opensInward ? -clampedDoorWidth + 4 : -4) : -8
+                                            }
+                                        } else {
+                                            // Wall-mounted furniture on right wall - render to the left of the wall line
+                                            offsetStyle = { marginLeft: -(displayWidth + 8) }
                                         }
                                     }
                                 }
@@ -1667,7 +1889,7 @@ function GridCanvas({ room, placements, onAddFurnitureAt, zoom, catalog, selecte
                                         style={{ 
                                             left: `${posX}%`, 
                                             top: `${posY}%`,
-                                            transform: isDoorOrWindow 
+                                            transform: isAnyWallMounted && wallPosition
                                                 ? `translate(-${anchorX}, -${anchorY})`
                                                 : `translate(-50%, -50%) rotate(${p.rotation || 0}deg)`,
                                             ...offsetStyle
@@ -1793,9 +2015,9 @@ function GridCanvas({ room, placements, onAddFurnitureAt, zoom, catalog, selecte
                                                 {/* Window - Professional Architectural Symbol */}
                                                 {isWindow && (
                                                     <svg
-                                                        width={isHorizontalWall ? clampedDoorWidth : 16}
-                                                        height={isHorizontalWall ? 16 : clampedDoorWidth}
-                                                        viewBox={isHorizontalWall ? "0 0 100 16" : "0 0 16 100"}
+                                                        width={isHorizontalWall ? clampedDoorWidth : 20}
+                                                        height={isHorizontalWall ? 20 : clampedDoorWidth}
+                                                        viewBox={isHorizontalWall ? "0 0 100 20" : "0 0 20 100"}
                                                         className={clsx(
                                                             isSelectedFurniture ? 'opacity-100' : 'opacity-95'
                                                         )}
@@ -1803,62 +2025,62 @@ function GridCanvas({ room, placements, onAddFurnitureAt, zoom, catalog, selecte
                                                         {isHorizontalWall ? (
                                                             <>
                                                                 {/* Wall sections on sides */}
-                                                                <rect x="0" y="0" width="6" height="16" fill={room.wallColor || '#FAF9F6'} stroke="#1f2937" strokeWidth="1" />
-                                                                <rect x="94" y="0" width="6" height="16" fill={room.wallColor || '#FAF9F6'} stroke="#1f2937" strokeWidth="1" />
+                                                                <rect x="0" y="2" width="6" height="16" fill={room.wallColor || '#FAF9F6'} stroke="#1f2937" strokeWidth="1" />
+                                                                <rect x="94" y="2" width="6" height="16" fill={room.wallColor || '#FAF9F6'} stroke="#1f2937" strokeWidth="1" />
                                                                 
                                                                 {/* Window frame - outer */}
-                                                                <rect x="6" y="1" width="88" height="14" fill="#f8fafc" stroke="#374151" strokeWidth="1.5" />
+                                                                <rect x="6" y="3" width="88" height="14" fill="#f8fafc" stroke="#374151" strokeWidth="1.5" />
                                                                 
                                                                 {/* Window sill (bottom) */}
-                                                                <rect x="4" y="13" width="92" height="3" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="0.5" />
+                                                                <rect x="4" y="15" width="92" height="4" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="0.5" />
                                                                 
                                                                 {/* Glass panes with realistic appearance */}
-                                                                <rect x="8" y="2.5" width="40" height="10" fill="#bfdbfe" stroke="#64748b" strokeWidth="1" opacity="0.8" />
-                                                                <rect x="52" y="2.5" width="40" height="10" fill="#bfdbfe" stroke="#64748b" strokeWidth="1" opacity="0.8" />
+                                                                <rect x="8" y="4.5" width="40" height="10" fill="#bfdbfe" stroke="#64748b" strokeWidth="1" opacity="0.8" />
+                                                                <rect x="52" y="4.5" width="40" height="10" fill="#bfdbfe" stroke="#64748b" strokeWidth="1" opacity="0.8" />
                                                                 
                                                                 {/* Glass reflection effect */}
-                                                                <line x1="12" y1="3.5" x2="20" y2="3.5" stroke="#ffffff" strokeWidth="1.5" opacity="0.6" />
-                                                                <line x1="56" y1="3.5" x2="64" y2="3.5" stroke="#ffffff" strokeWidth="1.5" opacity="0.6" />
+                                                                <line x1="12" y1="5.5" x2="20" y2="5.5" stroke="#ffffff" strokeWidth="1.5" opacity="0.6" />
+                                                                <line x1="56" y1="5.5" x2="64" y2="5.5" stroke="#ffffff" strokeWidth="1.5" opacity="0.6" />
                                                                 
                                                                 {/* Center mullion/divider */}
-                                                                <rect x="48" y="1" width="4" height="14" fill="#f1f5f9" stroke="#64748b" strokeWidth="0.8" />
+                                                                <rect x="48" y="3" width="4" height="14" fill="#f1f5f9" stroke="#64748b" strokeWidth="0.8" />
                                                                 
                                                                 {/* Horizontal glazing bars */}
-                                                                <line x1="8" y1="7.5" x2="48" y2="7.5" stroke="#94a3b8" strokeWidth="1" />
-                                                                <line x1="52" y1="7.5" x2="92" y2="7.5" stroke="#94a3b8" strokeWidth="1" />
+                                                                <line x1="8" y1="9.5" x2="48" y2="9.5" stroke="#94a3b8" strokeWidth="1" />
+                                                                <line x1="52" y1="9.5" x2="92" y2="9.5" stroke="#94a3b8" strokeWidth="1" />
                                                                 
                                                                 {/* Window latch/handle */}
-                                                                <rect x="46" y="6" width="8" height="3" fill="#d4af37" stroke="#b8860b" strokeWidth="0.3" rx="0.5" />
+                                                                <rect x="46" y="8" width="8" height="3" fill="#d4af37" stroke="#b8860b" strokeWidth="0.3" rx="0.5" />
                                                             </>
                                                         ) : (
                                                             <>
                                                                 {/* Wall sections on sides */}
-                                                                <rect x="0" y="0" width="16" height="6" fill={room.wallColor || '#FAF9F6'} stroke="#1f2937" strokeWidth="1" />
-                                                                <rect x="0" y="94" width="16" height="6" fill={room.wallColor || '#FAF9F6'} stroke="#1f2937" strokeWidth="1" />
+                                                                <rect x="2" y="0" width="16" height="6" fill={room.wallColor || '#FAF9F6'} stroke="#1f2937" strokeWidth="1" />
+                                                                <rect x="2" y="94" width="16" height="6" fill={room.wallColor || '#FAF9F6'} stroke="#1f2937" strokeWidth="1" />
                                                                 
                                                                 {/* Window frame - outer */}
-                                                                <rect x="1" y="6" width="14" height="88" fill="#f8fafc" stroke="#374151" strokeWidth="1.5" />
+                                                                <rect x="3" y="6" width="14" height="88" fill="#f8fafc" stroke="#374151" strokeWidth="1.5" />
                                                                 
                                                                 {/* Window sill */}
-                                                                <rect x="0" y="4" width="3" height="92" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="0.5" />
+                                                                <rect x="0" y="4" width="4" height="92" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="0.5" />
                                                                 
                                                                 {/* Glass panes */}
-                                                                <rect x="2.5" y="8" width="10" height="40" fill="#bfdbfe" stroke="#64748b" strokeWidth="1" opacity="0.8" />
-                                                                <rect x="2.5" y="52" width="10" height="40" fill="#bfdbfe" stroke="#64748b" strokeWidth="1" opacity="0.8" />
+                                                                <rect x="4.5" y="8" width="10" height="40" fill="#bfdbfe" stroke="#64748b" strokeWidth="1" opacity="0.8" />
+                                                                <rect x="4.5" y="52" width="10" height="40" fill="#bfdbfe" stroke="#64748b" strokeWidth="1" opacity="0.8" />
                                                                 
                                                                 {/* Glass reflection */}
-                                                                <line x1="3.5" y1="12" x2="3.5" y2="20" stroke="#ffffff" strokeWidth="1.5" opacity="0.6" />
-                                                                <line x1="3.5" y1="56" x2="3.5" y2="64" stroke="#ffffff" strokeWidth="1.5" opacity="0.6" />
+                                                                <line x1="5.5" y1="12" x2="5.5" y2="20" stroke="#ffffff" strokeWidth="1.5" opacity="0.6" />
+                                                                <line x1="5.5" y1="56" x2="5.5" y2="64" stroke="#ffffff" strokeWidth="1.5" opacity="0.6" />
                                                                 
                                                                 {/* Center mullion */}
-                                                                <rect x="1" y="48" width="14" height="4" fill="#f1f5f9" stroke="#64748b" strokeWidth="0.8" />
+                                                                <rect x="3" y="48" width="14" height="4" fill="#f1f5f9" stroke="#64748b" strokeWidth="0.8" />
                                                                 
                                                                 {/* Vertical glazing bars */}
-                                                                <line x1="7.5" y1="8" x2="7.5" y2="48" stroke="#94a3b8" strokeWidth="1" />
-                                                                <line x1="7.5" y1="52" x2="7.5" y2="92" stroke="#94a3b8" strokeWidth="1" />
+                                                                <line x1="9.5" y1="8" x2="9.5" y2="48" stroke="#94a3b8" strokeWidth="1" />
+                                                                <line x1="9.5" y1="52" x2="9.5" y2="92" stroke="#94a3b8" strokeWidth="1" />
                                                                 
                                                                 {/* Window latch */}
-                                                                <rect x="6" y="46" width="3" height="8" fill="#d4af37" stroke="#b8860b" strokeWidth="0.3" rx="0.5" />
+                                                                <rect x="8" y="46" width="3" height="8" fill="#d4af37" stroke="#b8860b" strokeWidth="0.3" rx="0.5" />
                                                             </>
                                                         )}
                                                     </svg>
@@ -1980,12 +2202,14 @@ function GridCanvas({ room, placements, onAddFurnitureAt, zoom, catalog, selecte
                         <h3 className="text-2xl font-bold text-white mb-2">Design Your Dream Space</h3>
                         <p className="text-slate-400 mb-8 max-w-md mx-auto">Add a room from the sidebar to start creating your interior design. Drag and drop furniture to customize your space.</p>
                         <div className="flex justify-center gap-4">
-                            {ROOM_TYPES.slice(0, 3).map((room) => (
-                                <div key={room.id} className="flex flex-col items-center gap-2 px-5 py-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
-                                    <room.icon className="w-6 h-6 text-slate-500" />
-                                    <span className="text-xs text-slate-400">{room.name}</span>
+                            {ROOM_TYPES.slice(0, 6).map((room) => {
+                                const RoomShape = room.shape
+                                return (
+                                <div key={room.id} className="w-14 h-14 flex items-center justify-center p-2 bg-zinc-100 rounded-lg border border-zinc-200">
+                                    <RoomShape className="w-full h-full drop-shadow-sm" />
                                 </div>
-                            ))}
+                                )
+                            })}
                         </div>
                     </div>
                 )}
@@ -4641,7 +4865,7 @@ function Furniture3DRenderer({ furniture, position, rotation }: Furniture3DProps
     return <GenericFurniture3D furniture={furniture} position={position} rotation={rotation} />;
 }
 
-function ThreeViewport({ room, placements, catalog }: { room: InteriorRoom | null; placements: FurniturePlacement[]; catalog: InteriorCatalog | null }) {
+function ThreeViewport({ room, placements, catalog, onCanvasReady }: { room: InteriorRoom | null; placements: FurniturePlacement[]; catalog: InteriorCatalog | null; onCanvasReady?: (canvas: HTMLCanvasElement | null) => void }) {
     if (!room) return <div className="h-full w-full bg-slate-900 flex items-center justify-center text-slate-500">Select a room to see 3D view</div>
     
     // Get furniture details from catalog
@@ -4815,7 +5039,16 @@ function ThreeViewport({ room, placements, catalog }: { room: InteriorRoom | nul
     };
     
     return (
-        <Canvas shadows className="h-full w-full">
+        <Canvas 
+            shadows 
+            className="h-full w-full"
+            gl={{ preserveDrawingBuffer: true }}
+            onCreated={({ gl }) => {
+                if (onCanvasReady) {
+                    onCanvasReady(gl.domElement);
+                }
+            }}
+        >
             <Suspense fallback={null}>
                 <ambientLight intensity={0.4} />
                 <hemisphereLight intensity={0.3} color="#fef3c7" groundColor={floorColor} />

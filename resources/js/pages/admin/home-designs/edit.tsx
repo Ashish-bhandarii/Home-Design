@@ -122,6 +122,7 @@ export default function HomeDesignsEdit({
         if (confirm('Are you sure you want to delete this image?')) {
             router.delete(admin.homeDesigns.deleteImage({ homeDesign: homeDesign.id, image: imageId }).url, {
                 preserveScroll: true,
+                preserveState: false,
             });
         }
     };

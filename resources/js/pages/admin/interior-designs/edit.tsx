@@ -123,6 +123,7 @@ export default function InteriorDesignsEdit({
         if (confirm('Are you sure you want to delete this image?')) {
             router.delete(`/admin/interior-designs/${interiorDesign.id}/images/${imageId}`, {
                 preserveScroll: true,
+                preserveState: false,
             });
         }
     };

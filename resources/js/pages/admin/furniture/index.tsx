@@ -50,12 +50,18 @@ export default function FurnitureIndex({ furniture, categories, rooms }: Props) 
 
     const handleDelete = (id: number) => {
         if (confirm('Are you sure you want to delete this furniture?')) {
-            router.delete(`/admin/furniture/${id}`);
+            router.delete(`/admin/furniture/${id}`, {
+                preserveScroll: true,
+                preserveState: false,
+            });
         }
     };
 
     const toggleActive = (id: number) => {
-        router.post(`/admin/furniture/${id}/toggle-active`);
+        router.post(`/admin/furniture/${id}/toggle-active`, {}, {
+            preserveScroll: true,
+            preserveState: false,
+        });
     };
 
     const formatDate = (dateString: string) => {
@@ -237,7 +243,7 @@ export default function FurnitureIndex({ furniture, categories, rooms }: Props) 
                                             <div className="flex items-center gap-3">
                                                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
                                                     {item.image ? (
-                                                        <img src={`/storage/${item.image}`} alt={item.name} className="h-full w-full rounded-lg object-cover" />
+                                                        <img src={item.image.startsWith('http') ? item.image : `/storage/${item.image}`} alt={item.name} className="h-full w-full rounded-lg object-cover" />
                                                     ) : (
                                                         <Armchair className="h-6 w-6 text-slate-400" />
                                                     )}
