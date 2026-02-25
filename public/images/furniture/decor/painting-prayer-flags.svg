@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 90" width="150" height="90">
+  <defs>
+    <linearGradient id="pf-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4682B4"/>
+      <stop offset="70%" stop-color="#87CEEB"/>
+      <stop offset="100%" stop-color="#B0E0E6"/>
+    </linearGradient>
+    <linearGradient id="pf-wood" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6B4226"/>
+      <stop offset="50%" stop-color="#5D3A1A"/>
+      <stop offset="100%" stop-color="#4A2E14"/>
+    </linearGradient>
+  </defs>
+  <!-- Shadow -->
+  <rect x="4" y="4" width="146" height="86" rx="2" fill="rgba(0,0,0,0.3)"/>
+  <!-- Outer frame -->
+  <rect x="0" y="0" width="146" height="86" rx="2" fill="url(#pf-wood)" stroke="#3E2610" stroke-width="1.5"/>
+  <!-- Inner frame -->
+  <rect x="6" y="6" width="134" height="74" rx="1" fill="#4A2E14" stroke="#7B5B3A" stroke-width="1"/>
+  <!-- Canvas -->
+  <rect x="10" y="10" width="126" height="66" fill="url(#pf-sky)"/>
+  <!-- Mountain backdrop -->
+  <polygon points="10,55 30,30 50,45 70,25 95,40 115,28 136,38 136,76 10,76" fill="#E8EEF4" opacity="0.5"/>
+  <!-- Snow peaks -->
+  <polygon points="60,40 70,25 80,40" fill="white" opacity="0.7"/>
+  <polygon points="105,35 115,28 125,35" fill="white" opacity="0.6"/>
+  <polygon points="22,45 30,30 38,45" fill="white" opacity="0.5"/>
+  <!-- String line 1 (main) -->
+  <path d="M12,22 Q40,18 73,20 Q106,22 134,18" fill="none" stroke="#333" stroke-width="0.8"/>
+  <!-- Blue flags -->
+  <polygon points="18,22 18,35 28,33" fill="#1E90FF" opacity="0.85"/>
+  <polygon points="42,20 42,33 52,31" fill="#1E90FF" opacity="0.85"/>
+  <polygon points="90,21 90,34 100,32" fill="#1E90FF" opacity="0.85"/>
+  <polygon points="118,19 118,32 128,30" fill="#1E90FF" opacity="0.85"/>
+  <!-- White flags -->
+  <polygon points="28,22 28,35 38,33" fill="#FFFFFF" opacity="0.85"/>
+  <polygon points="52,20 52,33 62,31" fill="#FFFFFF" opacity="0.85"/>
+  <polygon points="100,21 100,34 110,32" fill="#FFFFFF" opacity="0.85"/>
+  <!-- Red flags -->
+  <polygon points="62,20 62,33 72,31" fill="#DC143C" opacity="0.85"/>
+  <polygon points="110,20 110,33 120,31" fill="#DC143C" opacity="0.85"/>
+  <!-- Green flags -->
+  <polygon points="72,20 72,33 82,31" fill="#228B22" opacity="0.85"/>
+  <polygon points="128,19 128,32 136,30" fill="#228B22" opacity="0.85"/>
+  <!-- Yellow flags -->
+  <polygon points="82,21 82,34 92,32" fill="#FFD700" opacity="0.85"/>
+  <!-- Text-like marks on flags -->
+  <line x1="21" y1="26" x2="25" y2="26" stroke="#1565C0" stroke-width="0.3" opacity="0.5"/>
+  <line x1="21" y1="29" x2="24" y2="29" stroke="#1565C0" stroke-width="0.3" opacity="0.5"/>
+  <line x1="55" y1="25" x2="59" y2="25" stroke="#CCC" stroke-width="0.3" opacity="0.5"/>
+  <line x1="65" y1="25" x2="69" y2="25" stroke="#A01030" stroke-width="0.3" opacity="0.5"/>
+  <!-- String line 2 (lower) -->
+  <path d="M12,36 Q45,32 73,34 Q100,36 134,33" fill="none" stroke="#333" stroke-width="0.6"/>
+  <!-- Lower flags - smaller -->
+  <polygon points="20,36 20,46 28,44" fill="#FFD700" opacity="0.75"/>
+  <polygon points="28,35 28,45 36,43" fill="#228B22" opacity="0.75"/>
+  <polygon points="36,35 36,45 44,43" fill="#DC143C" opacity="0.75"/>
+  <polygon points="44,34 44,44 52,42" fill="#1E90FF" opacity="0.75"/>
+  <polygon points="52,34 52,44 60,42" fill="#FFFFFF" opacity="0.75"/>
+  <polygon points="60,34 60,44 68,42" fill="#FFD700" opacity="0.75"/>
+  <polygon points="68,34 68,44 76,42" fill="#228B22" opacity="0.75"/>
+  <polygon points="76,34 76,44 84,43" fill="#DC143C" opacity="0.75"/>
+  <polygon points="84,35 84,45 92,43" fill="#1E90FF" opacity="0.75"/>
+  <polygon points="92,35 92,45 100,43" fill="#FFFFFF" opacity="0.75"/>
+  <polygon points="100,35 100,45 108,43" fill="#FFD700" opacity="0.75"/>
+  <polygon points="108,34 108,44 116,42" fill="#228B22" opacity="0.75"/>
+  <polygon points="116,34 116,44 124,42" fill="#DC143C" opacity="0.75"/>
+  <polygon points="124,33 124,43 132,41" fill="#1E90FF" opacity="0.75"/>
+  <!-- Foreground green -->
+  <polygon points="10,62 30,56 60,60 90,55 120,58 136,54 136,76 10,76" fill="#4A7A4A" opacity="0.5"/>
+  <rect x="10" y="68" width="126" height="8" fill="#3B5E3B" opacity="0.4"/>
+</svg>

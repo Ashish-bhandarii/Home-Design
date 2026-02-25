@@ -1,17 +1,33 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" width="60" height="60">
-  <!-- Large Indoor Plant - Top View Floor Plan -->
+  <defs>
+    <radialGradient id="potGrad" cx="50%" cy="40%">
+      <stop offset="0%" style="stop-color:#E8C9A0"/>
+      <stop offset="100%" style="stop-color:#A67B5B"/>
+    </radialGradient>
+  </defs>
+  <!-- Pot shadow -->
+  <ellipse cx="30" cy="56" rx="16" ry="3" fill="#00000020"/>
   <!-- Pot -->
-  <circle cx="30" cy="30" r="18" fill="#D4A574" stroke="#A67B5B" stroke-width="2"/>
+  <path d="M 14 35 L 16 55 Q 30 58 44 55 L 46 35 Z" fill="url(#potGrad)" stroke="#8B6B4A" stroke-width="1"/>
+  <path d="M 12 33 L 14 35 L 46 35 L 48 33 Q 48 30 12 30 Z" fill="#C4A47A" stroke="#8B6B4A" stroke-width="0.5"/>
   <!-- Soil -->
-  <circle cx="30" cy="30" r="14" fill="#78350F"/>
-  <!-- Foliage (fiddle leaf fig style) -->
-  <g fill="#22C55E" stroke="#16A34A" stroke-width="1">
-    <ellipse cx="30" cy="18" rx="8" ry="12"/>
-    <ellipse cx="18" cy="28" rx="10" ry="7" transform="rotate(-30 18 28)"/>
-    <ellipse cx="42" cy="28" rx="10" ry="7" transform="rotate(30 42 28)"/>
-    <ellipse cx="22" cy="40" rx="9" ry="6" transform="rotate(-45 22 40)"/>
-    <ellipse cx="38" cy="40" rx="9" ry="6" transform="rotate(45 38 40)"/>
+  <ellipse cx="30" cy="34" rx="15" ry="4" fill="#5C3D1E"/>
+  <!-- Trunk -->
+  <rect x="28" y="15" width="4" height="20" fill="#6B4423" rx="1"/>
+  <!-- Leaves (fiddle leaf fig style) -->
+  <g fill="#22C55E" stroke="#16A34A" stroke-width="0.8">
+    <ellipse cx="30" cy="8" rx="9" ry="12" opacity="0.9"/>
+    <ellipse cx="18" cy="16" rx="10" ry="7" transform="rotate(-25 18 16)" opacity="0.85"/>
+    <ellipse cx="42" cy="16" rx="10" ry="7" transform="rotate(25 42 16)" opacity="0.85"/>
+    <ellipse cx="16" cy="28" rx="8" ry="6" transform="rotate(-35 16 28)" opacity="0.8"/>
+    <ellipse cx="44" cy="28" rx="8" ry="6" transform="rotate(35 44 28)" opacity="0.8"/>
+    <ellipse cx="25" cy="22" rx="7" ry="5" transform="rotate(-15 25 22)" opacity="0.75"/>
+    <ellipse cx="35" cy="22" rx="7" ry="5" transform="rotate(15 35 22)" opacity="0.75"/>
   </g>
-  <!-- Center -->
-  <circle cx="30" cy="30" r="3" fill="#166534"/>
+  <!-- Leaf veins -->
+  <g stroke="#16A34A" stroke-width="0.4" opacity="0.5" fill="none">
+    <line x1="30" y1="2" x2="30" y2="16"/>
+    <line x1="18" y1="12" x2="18" y2="20"/>
+    <line x1="42" y1="12" x2="42" y2="20"/>
+  </g>
 </svg>

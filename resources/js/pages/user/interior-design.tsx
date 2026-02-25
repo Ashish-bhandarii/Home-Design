@@ -8,7 +8,7 @@ import type {
     RoomTemplateId
 } from '@/types/interior-design'
 import { Head, Link } from '@inertiajs/react'
-import { OrbitControls, PerspectiveCamera, Sky } from '@react-three/drei'
+import { Environment, OrbitControls, PerspectiveCamera, Sky } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import axios from 'axios'
 import clsx from 'clsx'
@@ -179,6 +179,226 @@ const getRoomClipPath = (shapeId: RoomShapeId): string => {
     }
 }
 
+// Get 3D floor vertices for room shape (returns vertices for THREE.Shape)
+// Coordinates are in 3D space: x = left-right, z = front-back (note: y is up in 3D)
+// Returns vertices centered at origin (0,0)
+const getRoom3DFloorVertices = (shapeId: RoomShapeId, width: number, length: number): [number, number][] => {
+    const hw = width / 2  // half width
+    const hl = length / 2 // half length
+    
+    switch (shapeId) {
+        case 'square':
+        case 'rect-h':
+        case 'rect-v':
+            // Simple rectangle
+            return [
+                [-hw, -hl],
+                [hw, -hl],
+                [hw, hl],
+                [-hw, hl]
+            ]
+        case 'l-right':
+            // L-shape: cut out top-right corner (55% width, 45% height from top)
+            const lrCutX = width * 0.55 - hw  // Convert to centered coordinates
+            const lrCutZ = -hl + length * 0.45  // From back
+            return [
+                [-hw, -hl],           // back-left
+                [lrCutX, -hl],        // back to cut
+                [lrCutX, lrCutZ],     // cut corner
+                [hw, lrCutZ],         // right at cut height
+                [hw, hl],             // front-right
+                [-hw, hl]             // front-left
+            ]
+        case 'l-left':
+            // L-shape: cut out top-left corner (45% width from left, 45% height from top)
+            const llCutX = -hw + width * 0.45
+            const llCutZ = -hl + length * 0.45
+            return [
+                [llCutX, -hl],        // back at cut x
+                [hw, -hl],            // back-right
+                [hw, hl],             // front-right
+                [-hw, hl],            // front-left
+                [-hw, llCutZ],        // left at cut height
+                [llCutX, llCutZ]      // cut corner
+            ]
+        case 'l-corner':
+            // L-shape: cut out bottom-right corner (45% width from left, 55% height from top)
+            const lcCutX = -hw + width * 0.45
+            const lcCutZ = -hl + length * 0.55
+            return [
+                [-hw, -hl],           // back-left
+                [lcCutX, -hl],        // back to cut x
+                [lcCutX, lcCutZ],     // cut corner
+                [hw, lcCutZ],         // right at cut height
+                [hw, hl],             // front-right
+                [-hw, hl]             // front-left
+            ]
+        default:
+            return [
+                [-hw, -hl],
+                [hw, -hl],
+                [hw, hl],
+                [-hw, hl]
+            ]
+    }
+}
+
+// Get wall segments for L-shaped rooms (returns array of wall definitions)
+// Each wall has: start point, end point, and which wall it belongs to conceptually
+interface WallSegment {
+    start: [number, number]  // [x, z]
+    end: [number, number]    // [x, z]
+    normal: 'back' | 'front' | 'left' | 'right' | 'inner-h' | 'inner-v' // Wall facing direction
+}
+
+const getRoom3DWallSegments = (shapeId: RoomShapeId, width: number, length: number): WallSegment[] => {
+    const hw = width / 2
+    const hl = length / 2
+    
+    switch (shapeId) {
+        case 'square':
+        case 'rect-h':
+        case 'rect-v':
+            return [
+                { start: [-hw, -hl], end: [hw, -hl], normal: 'back' },   // back wall
+                { start: [hw, -hl], end: [hw, hl], normal: 'right' },    // right wall
+                { start: [hw, hl], end: [-hw, hl], normal: 'front' },    // front wall
+                { start: [-hw, hl], end: [-hw, -hl], normal: 'left' }    // left wall
+            ]
+        case 'l-right':
+            const lrCutX = width * 0.55 - hw
+            const lrCutZ = -hl + length * 0.45
+            return [
+                { start: [-hw, -hl], end: [lrCutX, -hl], normal: 'back' },      // back wall (partial)
+                { start: [lrCutX, -hl], end: [lrCutX, lrCutZ], normal: 'inner-v' },  // inner vertical wall
+                { start: [lrCutX, lrCutZ], end: [hw, lrCutZ], normal: 'inner-h' },   // inner horizontal wall
+                { start: [hw, lrCutZ], end: [hw, hl], normal: 'right' },        // right wall (partial)
+                { start: [hw, hl], end: [-hw, hl], normal: 'front' },           // front wall
+                { start: [-hw, hl], end: [-hw, -hl], normal: 'left' }           // left wall
+            ]
+        case 'l-left':
+            const llCutX = -hw + width * 0.45
+            const llCutZ = -hl + length * 0.45
+            return [
+                { start: [llCutX, -hl], end: [hw, -hl], normal: 'back' },       // back wall (partial)
+                { start: [hw, -hl], end: [hw, hl], normal: 'right' },           // right wall
+                { start: [hw, hl], end: [-hw, hl], normal: 'front' },           // front wall
+                { start: [-hw, hl], end: [-hw, llCutZ], normal: 'left' },       // left wall (partial)
+                { start: [-hw, llCutZ], end: [llCutX, llCutZ], normal: 'inner-h' },  // inner horizontal wall
+                { start: [llCutX, llCutZ], end: [llCutX, -hl], normal: 'inner-v' }   // inner vertical wall
+            ]
+        case 'l-corner':
+            const lcCutX = -hw + width * 0.45
+            const lcCutZ = -hl + length * 0.55
+            return [
+                { start: [-hw, -hl], end: [lcCutX, -hl], normal: 'back' },      // back wall (partial)
+                { start: [lcCutX, -hl], end: [lcCutX, lcCutZ], normal: 'inner-v' },  // inner vertical wall
+                { start: [lcCutX, lcCutZ], end: [hw, lcCutZ], normal: 'inner-h' },   // inner horizontal wall
+                { start: [hw, lcCutZ], end: [hw, hl], normal: 'right' },        // right wall (partial)
+                { start: [hw, hl], end: [-hw, hl], normal: 'front' },           // front wall
+                { start: [-hw, hl], end: [-hw, -hl], normal: 'left' }           // left wall
+            ]
+        default:
+            return [
+                { start: [-hw, -hl], end: [hw, -hl], normal: 'back' },
+                { start: [hw, -hl], end: [hw, hl], normal: 'right' },
+                { start: [hw, hl], end: [-hw, hl], normal: 'front' },
+                { start: [-hw, hl], end: [-hw, -hl], normal: 'left' }
+            ]
+    }
+}
+
+// Check if a point (in normalized 0-1 coordinates) is inside the room shape
+const isPointInsideRoomShape = (shapeId: RoomShapeId, x: number, y: number): boolean => {
+    // x, y are in 0-1 range (0,0 is top-left, 1,1 is bottom-right)
+    switch (shapeId) {
+        case 'square':
+        case 'rect-h':
+        case 'rect-v':
+            return x >= 0 && x <= 1 && y >= 0 && y <= 1
+        case 'l-right':
+            // Cut out: x > 0.55 && y < 0.45 (top-right corner)
+            if (x > 0.55 && y < 0.45) return false
+            return x >= 0 && x <= 1 && y >= 0 && y <= 1
+        case 'l-left':
+            // Cut out: x < 0.45 && y < 0.45 (top-left corner)
+            if (x < 0.45 && y < 0.45) return false
+            return x >= 0 && x <= 1 && y >= 0 && y <= 1
+        case 'l-corner':
+            // Cut out: x > 0.45 && y < 0.55 (shifted cut)
+            if (x > 0.45 && y < 0.55) return false
+            return x >= 0 && x <= 1 && y >= 0 && y <= 1
+        default:
+            return x >= 0 && x <= 1 && y >= 0 && y <= 1
+    }
+}
+
+// Adjust a position to be inside the room shape (for L-shaped rooms)
+// Returns adjusted position or null if cannot be adjusted
+const adjustPositionToRoomShape = (
+    shapeId: RoomShapeId, 
+    x: number, 
+    y: number, 
+    halfWidthRatio: number, 
+    halfLengthRatio: number
+): { x: number, y: number } | null => {
+    // If already inside, return as-is
+    if (isPointInsideRoomShape(shapeId, x, y)) {
+        return { x, y }
+    }
+    
+    const margin = 0.02
+    
+    switch (shapeId) {
+        case 'l-right':
+            // Cut out: x > 0.55 && y < 0.45 (top-right corner)
+            // Move to nearest valid edge
+            if (x > 0.55 && y < 0.45) {
+                // Check which edge is closer
+                const distToLeft = x - 0.55
+                const distToBottom = 0.45 - y
+                if (distToLeft < distToBottom) {
+                    // Move left
+                    return { x: 0.55 - halfWidthRatio - margin, y }
+                } else {
+                    // Move down
+                    return { x, y: 0.45 + halfLengthRatio + margin }
+                }
+            }
+            break
+        case 'l-left':
+            // Cut out: x < 0.45 && y < 0.45 (top-left corner)
+            if (x < 0.45 && y < 0.45) {
+                const distToRight = 0.45 - x
+                const distToBottom = 0.45 - y
+                if (distToRight < distToBottom) {
+                    // Move right
+                    return { x: 0.45 + halfWidthRatio + margin, y }
+                } else {
+                    // Move down
+                    return { x, y: 0.45 + halfLengthRatio + margin }
+                }
+            }
+            break
+        case 'l-corner':
+            // Cut out: x > 0.45 && y < 0.55
+            if (x > 0.45 && y < 0.55) {
+                const distToLeft = x - 0.45
+                const distToBottom = 0.55 - y
+                if (distToLeft < distToBottom) {
+                    // Move left
+                    return { x: 0.45 - halfWidthRatio - margin, y }
+                } else {
+                    // Move down
+                    return { x, y: 0.55 + halfLengthRatio + margin }
+                }
+            }
+            break
+    }
+    
+    return null
+}
+
 // Room size limits in meters
 const ROOM_SIZE_LIMITS = {
     minWidth: 2,
@@ -336,8 +556,66 @@ export default function InteriorDesign({ project }: PageProps) {
     const [myProjects, setMyProjects] = useState<InteriorDesignProject[]>([])
     const [loadingProjects, setLoadingProjects] = useState(false)
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+    const isInitialLoadRef = useRef(true)
     const canvasRef = useRef<HTMLDivElement>(null)
     const threeCanvasRef = useRef<HTMLCanvasElement | null>(null)
+
+    // Undo/Redo history
+    const [undoStack, setUndoStack] = useState<Array<{ rooms: InteriorRoom[]; placements: FurniturePlacement[]; roomDesigns: Record<string, RoomDesign> }>>([])
+    const [redoStack, setRedoStack] = useState<Array<{ rooms: InteriorRoom[]; placements: FurniturePlacement[]; roomDesigns: Record<string, RoomDesign> }>>([])
+    const isUndoRedoRef = useRef(false)
+
+    // Push current state to undo stack (call BEFORE making changes)
+    const pushUndoState = useCallback(() => {
+        setUndoStack(prev => {
+            const snapshot = { rooms: [...rooms], placements: [...placements], roomDesigns: { ...roomDesigns } }
+            const newStack = [...prev, snapshot]
+            // Keep max 50 undo steps
+            return newStack.length > 50 ? newStack.slice(-50) : newStack
+        })
+        setRedoStack([]) // Clear redo stack on new action
+    }, [rooms, placements, roomDesigns])
+
+    // Undo
+    const handleUndo = useCallback(() => {
+        if (undoStack.length === 0) return
+        isUndoRedoRef.current = true
+        const prevState = undoStack[undoStack.length - 1]
+        setRedoStack(prev => [...prev, { rooms: [...rooms], placements: [...placements], roomDesigns: { ...roomDesigns } }])
+        setUndoStack(prev => prev.slice(0, -1))
+        setRooms(prevState.rooms)
+        setPlacements(prevState.placements)
+        setRoomDesigns(prevState.roomDesigns)
+        setTimeout(() => { isUndoRedoRef.current = false }, 0)
+    }, [undoStack, rooms, placements, roomDesigns])
+
+    // Redo
+    const handleRedo = useCallback(() => {
+        if (redoStack.length === 0) return
+        isUndoRedoRef.current = true
+        const nextState = redoStack[redoStack.length - 1]
+        setUndoStack(prev => [...prev, { rooms: [...rooms], placements: [...placements], roomDesigns: { ...roomDesigns } }])
+        setRedoStack(prev => prev.slice(0, -1))
+        setRooms(nextState.rooms)
+        setPlacements(nextState.placements)
+        setRoomDesigns(nextState.roomDesigns)
+        setTimeout(() => { isUndoRedoRef.current = false }, 0)
+    }, [redoStack, rooms, placements, roomDesigns])
+
+    // Keyboard shortcuts for undo/redo
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+                e.preventDefault()
+                handleUndo()
+            } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+                e.preventDefault()
+                handleRedo()
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [handleUndo, handleRedo])
 
     // Load project data when component mounts with a project prop
     useEffect(() => {
@@ -351,11 +629,16 @@ export default function InteriorDesign({ project }: PageProps) {
                 setSelectedRoomId(project.rooms[0].id)
             }
             setHasUnsavedChanges(false)
+            // Mark initial load complete after state settles
+            setTimeout(() => { isInitialLoadRef.current = false }, 100)
+        } else {
+            isInitialLoadRef.current = false
         }
     }, [project])
 
-    // Track unsaved changes
+    // Track unsaved changes (skip initial load)
     useEffect(() => {
+        if (isInitialLoadRef.current || isUndoRedoRef.current) return
         if (currentProjectId) {
             setHasUnsavedChanges(true)
         }
@@ -616,6 +899,8 @@ export default function InteriorDesign({ project }: PageProps) {
                 )
             }
             
+            const shapeId = (room.shapeId || 'square') as RoomShapeId
+            
             // For wall-mounted items (doors/windows/mirrors/paintings), snap to nearest wall automatically
             const isWallMounted = isWallMountedFurniture(furniture)
             if (isWallMounted) {
@@ -653,6 +938,12 @@ export default function InteriorDesign({ project }: PageProps) {
                     }
                 }
                 
+                // For L-shaped rooms, validate wall-mounted items are on valid walls
+                if (!isPointInsideRoomShape(shapeId, finalX, finalY)) {
+                    // Keep the original position if the new position is invalid
+                    return current
+                }
+                
                 return current.map((p) =>
                     p.id === placementId
                         ? { ...p, offsetX: finalX, offsetY: finalY }
@@ -670,9 +961,46 @@ export default function InteriorDesign({ project }: PageProps) {
             const minY = halfLengthRatio + 0.02
             const maxY = 1 - halfLengthRatio - 0.02
             
+            let finalOffsetX = clamp(newOffsetX, minX, maxX)
+            let finalOffsetY = clamp(newOffsetY, minY, maxY)
+            
+            // For L-shaped rooms, check if position is inside the valid area
+            if (!isPointInsideRoomShape(shapeId, finalOffsetX, finalOffsetY)) {
+                // Try to adjust to nearest valid position
+                const adjusted = adjustPositionToRoomShape(shapeId, finalOffsetX, finalOffsetY, halfWidthRatio, halfLengthRatio)
+                if (adjusted) {
+                    finalOffsetX = clamp(adjusted.x, minX, maxX)
+                    finalOffsetY = clamp(adjusted.y, minY, maxY)
+                } else {
+                    // Keep the original position if we can't adjust
+                    return current
+                }
+            }
+            
+            // Check collision with other furniture (skip for stackable items)
+            const stackableCategories = ['Decor', 'Lighting']
+            const isStackable = stackableCategories.includes(furniture.category)
+            if (!isStackable) {
+                const otherPlacements = current.filter(p => p.roomId === placement.roomId && p.id !== placementId)
+                for (const other of otherPlacements) {
+                    const otherFurniture = catalog.furniture.find(f => f.id === other.furnitureId)
+                    if (!otherFurniture) continue
+                    if (stackableCategories.includes(otherFurniture.category)) continue
+                    const collision = checkCollision(
+                        { offsetX: finalOffsetX, offsetY: finalOffsetY, width: furniture.width, length: furniture.length },
+                        { offsetX: other.offsetX, offsetY: other.offsetY, width: otherFurniture.width, length: otherFurniture.length },
+                        room
+                    )
+                    if (collision) {
+                        // Collision detected - keep original position
+                        return current
+                    }
+                }
+            }
+            
             return current.map((p) =>
                 p.id === placementId
-                    ? { ...p, offsetX: clamp(newOffsetX, minX, maxX), offsetY: clamp(newOffsetY, minY, maxY) }
+                    ? { ...p, offsetX: finalOffsetX, offsetY: finalOffsetY }
                     : p
             )
         })
@@ -680,6 +1008,7 @@ export default function InteriorDesign({ project }: PageProps) {
 
     // Rotate furniture by 45 degrees (or flip doors 180 degrees)
     const handleRotateFurniture = useCallback((placementId: string) => {
+        pushUndoState()
         setPlacements((current) => {
             const placement = current.find(p => p.id === placementId)
             if (!placement) return current
@@ -693,13 +1022,14 @@ export default function InteriorDesign({ project }: PageProps) {
                     : p
             )
         })
-    }, [catalog])
+    }, [catalog, pushUndoState])
 
     // Delete furniture
     const handleDeleteFurniture = useCallback((placementId: string) => {
+        pushUndoState()
         setPlacements((current) => current.filter((p) => p.id !== placementId))
         setSelectedFurnitureId(null)
-    }, [])
+    }, [pushUndoState])
 
     useEffect(() => {
         let active = true
@@ -717,6 +1047,7 @@ export default function InteriorDesign({ project }: PageProps) {
     }, [])
 
     const handleAddRoom = (preset: typeof ROOM_TYPES[0]) => {
+        pushUndoState()
         const roomCount = rooms.length + 1
         const newRoom: InteriorRoom = {
             id: generateId(),
@@ -847,6 +1178,8 @@ export default function InteriorDesign({ project }: PageProps) {
         const room = rooms.find(r => r.id === roomId)
         if (!furniture || !room) return
         
+        const shapeId = (room.shapeId || 'square') as RoomShapeId
+        
         // Snap wall-mounted items to walls
         let finalOffsetX = offsetX
         let finalOffsetY = offsetY
@@ -867,6 +1200,19 @@ export default function InteriorDesign({ project }: PageProps) {
             
             finalOffsetX = clamp(offsetX, minX, maxX)
             finalOffsetY = clamp(offsetY, minY, maxY)
+            
+            // For L-shaped rooms, check if position is inside the valid area
+            if (!isPointInsideRoomShape(shapeId, finalOffsetX, finalOffsetY)) {
+                // Try to find a valid position by moving the furniture to the nearest valid area
+                const adjusted = adjustPositionToRoomShape(shapeId, finalOffsetX, finalOffsetY, halfWidthRatio, halfLengthRatio)
+                if (adjusted) {
+                    finalOffsetX = adjusted.x
+                    finalOffsetY = adjusted.y
+                } else {
+                    // Cannot place in cut-out area - reject placement
+                    return
+                }
+            }
         }
         
         // Check for collisions (skip for wall-mounted items as they're on walls)
@@ -874,6 +1220,8 @@ export default function InteriorDesign({ project }: PageProps) {
             // Collision detected - silently skip placement
             return
         }
+
+        pushUndoState()
         
         setRoomDesigns((current) => ({
             ...current,
@@ -975,12 +1323,29 @@ export default function InteriorDesign({ project }: PageProps) {
                                         </div>
                                         <div className="flex-1">
                                             <p className="font-medium text-sm text-orange-400">{currentRoom.name}</p>
-                                            <p className="text-xs text-slate-400">{currentRoom.width}m × {currentRoom.length}m • {(currentRoom.width * currentRoom.length).toFixed(1)} m²</p>
+                                            <p className="text-xs text-slate-400">{currentRoom.width}m × {currentRoom.length}m • {(() => {
+                                                const shape = (currentRoom.shapeId || 'square') as RoomShapeId
+                                                const totalArea = currentRoom.width * currentRoom.length
+                                                if (shape === 'l-right' || shape === 'l-left') {
+                                                    // Subtract cut-out: 45% width × 45% height
+                                                    return (totalArea - totalArea * 0.45 * 0.45).toFixed(1)
+                                                } else if (shape === 'l-corner') {
+                                                    // Subtract cut-out: 55% width × 55% height
+                                                    return (totalArea - totalArea * 0.55 * 0.55).toFixed(1)
+                                                }
+                                                return totalArea.toFixed(1)
+                                            })()} m²</p>
                                         </div>
                                         <button
                                             onClick={() => {
+                                                pushUndoState()
                                                 setRooms(r => r.filter(x => x.id !== currentRoom.id))
                                                 setPlacements(p => p.filter(x => x.roomId !== currentRoom.id))
+                                                setRoomDesigns(rd => {
+                                                    const next = { ...rd }
+                                                    delete next[currentRoom.id]
+                                                    return next
+                                                })
                                                 setSelectedRoomId(null)
                                                 setAddRoomExpanded(true)
                                             }}
@@ -1076,7 +1441,8 @@ export default function InteriorDesign({ project }: PageProps) {
                                                                     {item.name}
                                                                 </p>
                                                                 <p className="text-[10px] text-slate-500">
-                                                                    {item.width}m × {item.length}m
+                                                                    {item.mount === 'wall' ? `${item.width}m × ${item.height}m` : `${item.width}m × ${item.length}m`}
+                                                                    {item.mount === 'wall' && <span className="text-blue-400 ml-1">• Wall</span>}
                                                                     {!fitsInRoom && <span className="text-red-400 ml-1">• Too large</span>}
                                                                 </p>
                                                             </div>
@@ -1332,23 +1698,41 @@ export default function InteriorDesign({ project }: PageProps) {
                                                 <p className="text-xs text-slate-400">Save for later editing</p>
                                             </div>
                                         </button>
-                                        {viewMode === '3d' && (
-                                            <button
-                                                onClick={handleExportPNG}
-                                                className="w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-700 text-left transition-colors border-t border-slate-700"
-                                            >
-                                                <ImageIcon className="w-4 h-4 text-green-400" />
-                                                <div>
-                                                    <p className="text-sm text-white">Image (PNG)</p>
-                                                    <p className="text-xs text-slate-400">3D View Image</p>
-                                                </div>
-                                            </button>
-                                        )}
+                                        <button
+                                            onClick={handleExportPNG}
+                                            className="w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-700 text-left transition-colors border-t border-slate-700"
+                                        >
+                                            <ImageIcon className="w-4 h-4 text-green-400" />
+                                            <div>
+                                                <p className="text-sm text-white">Image (PNG)</p>
+                                                <p className="text-xs text-slate-400">{viewMode === '3d' ? '3D' : '2D'} View Image</p>
+                                            </div>
+                                        </button>
                                     </div>
                                 )}
                             </div>
                             
                             <div className="w-px h-6 bg-slate-700" />
+
+                            {/* Undo/Redo */}
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={handleUndo}
+                                    disabled={undoStack.length === 0}
+                                    className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:bg-slate-900 disabled:text-slate-600 text-slate-300 hover:text-white text-sm font-medium transition-all"
+                                    title="Undo (Ctrl+Z)"
+                                >
+                                    Undo
+                                </button>
+                                <button
+                                    onClick={handleRedo}
+                                    disabled={redoStack.length === 0}
+                                    className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:bg-slate-900 disabled:text-slate-600 text-slate-300 hover:text-white text-sm font-medium transition-all"
+                                    title="Redo (Ctrl+Y)"
+                                >
+                                    Redo
+                                </button>
+                            </div>
                             
                             {/* Zoom Controls */}
                             <div className="flex items-center gap-2">
@@ -1380,6 +1764,7 @@ export default function InteriorDesign({ project }: PageProps) {
                                 catalog={catalog}
                                 selectedFurnitureId={selectedFurnitureId}
                                 onSelectFurniture={setSelectedFurnitureId}
+                                onBeginFurnitureDrag={pushUndoState}
                                 onMoveFurniture={handleMoveFurniture}
                                 onRotateFurniture={handleRotateFurniture}
                                 onDeleteFurniture={handleDeleteFurniture}
@@ -1547,7 +1932,7 @@ export default function InteriorDesign({ project }: PageProps) {
     );
 }
 
-function GridCanvas({ room, placements, onAddFurnitureAt, zoom, catalog, selectedFurnitureId, onSelectFurniture, onMoveFurniture, onRotateFurniture, onDeleteFurniture }: {
+function GridCanvas({ room, placements, onAddFurnitureAt, zoom, catalog, selectedFurnitureId, onSelectFurniture, onBeginFurnitureDrag, onMoveFurniture, onRotateFurniture, onDeleteFurniture }: {
     room: InteriorRoom | null
     placements: FurniturePlacement[]
     onAddFurnitureAt: (roomId: string, furnitureId: string, offsetX: number, offsetY: number) => void
@@ -1555,6 +1940,7 @@ function GridCanvas({ room, placements, onAddFurnitureAt, zoom, catalog, selecte
     catalog: InteriorCatalog
     selectedFurnitureId: string | null
     onSelectFurniture: (id: string | null) => void
+    onBeginFurnitureDrag: () => void
     onMoveFurniture: (placementId: string, newOffsetX: number, newOffsetY: number) => void
     onRotateFurniture: (placementId: string) => void
     onDeleteFurniture: (placementId: string) => void
@@ -1592,66 +1978,42 @@ function GridCanvas({ room, placements, onAddFurnitureAt, zoom, catalog, selecte
         onAddFurnitureAt(room.id, furnitureId, offsetX, offsetY)
     }
 
-    // Handle mouse move for dragging furniture
+    // Handle mouse move for dragging furniture (wall-snapping handled by handleMoveFurniture)
     const handleMouseMove = useCallback((e: React.MouseEvent) => {
         if (!draggingFurniture || !room) return
-        const placement = placements.find(p => p.id === draggingFurniture.id)
-        if (!placement) return
-        
-        const furniture = catalog.furniture.find(f => f.id === placement.furnitureId)
 
         const deltaX = e.clientX - draggingFurniture.startX
         const deltaY = e.clientY - draggingFurniture.startY
         const deltaOffsetX = deltaX / roomWidth
         const deltaOffsetY = deltaY / roomHeight
 
-        let newOffsetX = draggingFurniture.startOffsetX + deltaOffsetX
-        let newOffsetY = draggingFurniture.startOffsetY + deltaOffsetY
-        
-        // For wall-mounted items, snap to nearest wall
-        const isWallMounted = isWallMountedFurniture(furniture)
-        if (isWallMounted) {
-            const WALL_POSITION = 0.01
-            // Determine nearest wall using strict less-than comparisons
-            const distTop = newOffsetY
-            const distBottom = 1 - newOffsetY
-            const distLeft = newOffsetX
-            const distRight = 1 - newOffsetX
-            
-            const minHorizontal = Math.min(distTop, distBottom)
-            const minVertical = Math.min(distLeft, distRight)
-            
-            if (minHorizontal < minVertical) {
-                // Snap to top or bottom wall
-                if (distTop < distBottom) {
-                    newOffsetY = WALL_POSITION
-                    newOffsetX = clamp(newOffsetX, 0.15, 0.85)
-                } else {
-                    newOffsetY = 1 - WALL_POSITION
-                    newOffsetX = clamp(newOffsetX, 0.15, 0.85)
-                }
-            } else {
-                // Snap to left or right wall
-                if (distLeft < distRight) {
-                    newOffsetX = WALL_POSITION
-                    newOffsetY = clamp(newOffsetY, 0.15, 0.85)
-                } else {
-                    newOffsetX = 1 - WALL_POSITION
-                    newOffsetY = clamp(newOffsetY, 0.15, 0.85)
-                }
-            }
-        }
+        const newOffsetX = draggingFurniture.startOffsetX + deltaOffsetX
+        const newOffsetY = draggingFurniture.startOffsetY + deltaOffsetY
 
         onMoveFurniture(draggingFurniture.id, newOffsetX, newOffsetY)
-    }, [draggingFurniture, placements, room, roomWidth, roomHeight, onMoveFurniture, catalog])
+    }, [draggingFurniture, room, roomWidth, roomHeight, onMoveFurniture])
 
     const handleMouseUp = useCallback(() => {
         setDraggingFurniture(null)
     }, [])
 
+    // Escape key cancels drag
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && draggingFurniture) {
+                // Restore original position
+                onMoveFurniture(draggingFurniture.id, draggingFurniture.startOffsetX, draggingFurniture.startOffsetY)
+                setDraggingFurniture(null)
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [draggingFurniture, onMoveFurniture])
+
     // Start dragging furniture
     const startDragFurniture = (e: React.MouseEvent, placement: FurniturePlacement) => {
         e.stopPropagation()
+        onBeginFurnitureDrag()
         onSelectFurniture(placement.id)
         setDraggingFurniture({
             id: placement.id,
@@ -1749,13 +2111,23 @@ function GridCanvas({ room, placements, onAddFurnitureAt, zoom, catalog, selecte
                                 const isDoor = isDoorOrWindow && !isWindow
                                 const isAnyWallMounted = isDoorOrWindow || isWallMountedOnly
                                 
+                                // True wall decor: Decor category wall items (mirrors, paintings, curtains)
+                                // These are flat items that should show as thin strips on the wall in 2D
+                                const isWallDecor = isWallMountedOnly && furniture?.category === 'Decor'
+                                // Functional wall items: Bathroom/Lighting wall items (cabinets, shelves, sconces)
+                                // These have real depth and should show top-down view in 2D
+                                const isFunctionalWallItem = isWallMountedOnly && !isWallDecor
+                                
                                 // Calculate furniture size on canvas (proportional to room)
                                 const furnitureWidth = furniture ? (furniture.width / room.width) * roomWidth : 48
                                 const furnitureHeight = furniture ? (furniture.length / room.length) * roomHeight : 48
                                 const minSize = 32
                                 const maxSize = 120
-                                const displayWidth = Math.min(maxSize, Math.max(minSize, furnitureWidth))
-                                const displayHeight = Math.min(maxSize, Math.max(minSize, furnitureHeight))
+                                // Wall decor and small functional items get bigger min size to be visible
+                                const isSmallItem = furniture && (furniture.width < 0.2 || furniture.length < 0.1)
+                                const effectiveMinSize = isWallDecor ? 40 : isSmallItem ? 36 : minSize
+                                let displayWidth = Math.min(maxSize, Math.max(effectiveMinSize, furnitureWidth))
+                                let displayHeight = Math.min(maxSize, Math.max(effectiveMinSize, furnitureHeight))
                                 
                                 // For wall-mounted items - snap to nearest wall edge
                                 let posX = p.offsetX * 100
@@ -1821,6 +2193,17 @@ function GridCanvas({ room, placements, onAddFurnitureAt, zoom, catalog, selecte
                                 const doorWidthPx = furniture ? (furniture.width / room.width) * roomWidth : 60
                                 const clampedDoorWidth = Math.min(100, Math.max(50, doorWidthPx))
                                 
+                                // Wall decor: orient as thin strip flush against the wall
+                                // On top/bottom (horizontal) walls: width runs along wall, height is thin
+                                // On left/right (vertical) walls: height runs along wall, width is thin
+                                if (isWallDecor && wallPosition) {
+                                    const isVerticalWall = wallPosition === 'left' || wallPosition === 'right'
+                                    const WALL_DECOR_THICKNESS = 20
+                                    const alongWallSize = displayWidth // capture before reassignment
+                                    displayWidth = isVerticalWall ? WALL_DECOR_THICKNESS : alongWallSize
+                                    displayHeight = isVerticalWall ? alongWallSize : WALL_DECOR_THICKNESS
+                                }
+                                
                                 // Positioning for wall-mounted items
                                 let anchorX = '50%'
                                 let anchorY = '50%'
@@ -1830,50 +2213,57 @@ function GridCanvas({ room, placements, onAddFurnitureAt, zoom, catalog, selecte
                                 // Items should be positioned AT the wall line and rendered INSIDE the room
                                 if (isAnyWallMounted && wallPosition) {
                                     if (wallPosition === 'top') {
-                                        anchorX = '50%'
-                                        anchorY = '0%'
                                         if (isDoorOrWindow) {
-                                            offsetStyle = { 
-                                                marginTop: isDoor ? (opensInward ? -4 : -clampedDoorWidth + 4) : -8
-                                            }
+                                            // Door/window symbols are drawn with wall line at top edge in base orientation
+                                            // Keep top-wall anchor on the symbol top edge
+                                            anchorX = '50%'
+                                            anchorY = '0%'
+                                            offsetStyle = {}
                                         } else {
-                                            // Wall-mounted furniture on top wall - sits just inside the wall
-                                            offsetStyle = { marginTop: 8 }
+                                            anchorX = '50%'
+                                            anchorY = '0%'
+                                            // Wall-mounted decor on top wall - center on wall line so it straddles it
+                                            offsetStyle = { marginTop: -(displayHeight / 2) }
                                         }
                                     } else if (wallPosition === 'bottom') {
-                                        anchorX = '50%'
-                                        anchorY = '0%' // Anchor at top of element
-                                        posY = 100 // Position at bottom
                                         if (isDoorOrWindow) {
-                                            offsetStyle = { 
-                                                marginTop: isDoor ? (opensInward ? -clampedDoorWidth + 4 : -4) : -8
-                                            }
+                                            // After 180° rotation, wall line is at symbol bottom edge
+                                            anchorX = '50%'
+                                            anchorY = '100%'
+                                            posY = 100
+                                            offsetStyle = {}
                                         } else {
-                                            // Wall-mounted furniture on bottom wall - render above the wall line
-                                            offsetStyle = { marginTop: -(displayHeight + 8) }
+                                            anchorX = '50%'
+                                            anchorY = '0%' // Anchor at top of element
+                                            posY = 100 // Position at bottom
+                                            // Wall-mounted decor on bottom wall - center on wall line
+                                            offsetStyle = { marginTop: -(displayHeight / 2) }
                                         }
                                     } else if (wallPosition === 'left') {
-                                        anchorX = '0%'
-                                        anchorY = '50%'
                                         if (isDoorOrWindow) {
-                                            offsetStyle = { 
-                                                marginLeft: isDoor ? (opensInward ? -4 : -clampedDoorWidth + 4) : -8
-                                            }
+                                            // After -90° rotation, wall line is at symbol left edge
+                                            anchorX = '0%'
+                                            anchorY = '50%'
+                                            offsetStyle = {}
                                         } else {
-                                            // Wall-mounted furniture on left wall - sits just inside the wall
-                                            offsetStyle = { marginLeft: 8 }
+                                            anchorX = '0%'
+                                            anchorY = '50%'
+                                            // Wall-mounted decor on left wall - center on wall line
+                                            offsetStyle = { marginLeft: -(displayWidth / 2) }
                                         }
                                     } else if (wallPosition === 'right') {
-                                        anchorX = '0%' // Anchor at left of element
-                                        anchorY = '50%'
-                                        posX = 100 // Position at right edge
                                         if (isDoorOrWindow) {
-                                            offsetStyle = { 
-                                                marginLeft: isDoor ? (opensInward ? -clampedDoorWidth + 4 : -4) : -8
-                                            }
+                                            // After 90° rotation, wall line is at symbol right edge
+                                            anchorX = '100%'
+                                            anchorY = '50%'
+                                            posX = 100
+                                            offsetStyle = {}
                                         } else {
-                                            // Wall-mounted furniture on right wall - render to the left of the wall line
-                                            offsetStyle = { marginLeft: -(displayWidth + 8) }
+                                            anchorX = '0%' // Anchor at left of element
+                                            anchorY = '50%'
+                                            posX = 100 // Position at right edge
+                                            // Wall-mounted decor on right wall - center on wall line
+                                            offsetStyle = { marginLeft: -(displayWidth / 2) }
                                         }
                                     }
                                 }
@@ -2086,48 +2476,144 @@ function GridCanvas({ room, placements, onAddFurnitureAt, zoom, catalog, selecte
                                                     </svg>
                                                 )}
                                             </div>
-                                        ) : (
-                                            /* Regular Furniture Item - with Image support */
-                                            <div
-                                                onMouseDown={(e) => startDragFurniture(e, p)}
-                                                onClick={(e) => { e.stopPropagation(); onSelectFurniture(p.id); }}
-                                                className={clsx(
-                                                    'rounded-lg shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing transition-all duration-200 overflow-hidden',
-                                                    isSelectedFurniture 
-                                                        ? 'ring-4 ring-orange-300 ring-opacity-50 shadow-orange-300/50 shadow-xl' 
-                                                        : 'hover:scale-105',
-                                                    !furniture?.image && (isSelectedFurniture ? 'bg-orange-500' : 'bg-amber-600 hover:bg-amber-500'),
-                                                    furniture?.image?.endsWith('.svg') && 'bg-slate-100'
-                                                )}
-                                                style={{ 
-                                                    width: displayWidth, 
-                                                    height: displayHeight,
-                                                }}
-                                                title={`${furniture?.name || 'Furniture'} (${furniture?.width}m × ${furniture?.length}m)`}
-                                            >
-                                                {/* Show image if available */}
-                                                {furniture?.image ? (
-                                                    <img 
-                                                        src={furniture.image} 
-                                                        alt={furniture.name}
-                                                        className={clsx(
-                                                            "w-full h-full",
-                                                            furniture.image.endsWith('.svg') ? 'object-contain p-1' : 'object-cover'
-                                                        )}
-                                                        draggable={false}
-                                                    />
-                                                ) : (
-                                                    <FurnitureIcon className={clsx(
-                                                        'w-6 h-6',
-                                                        isSelectedFurniture ? 'text-white' : 'text-amber-100'
-                                                    )} />
-                                                )}
-                                                {/* Selection overlay for images */}
-                                                {furniture?.image && isSelectedFurniture && (
-                                                    <div className="absolute inset-0 bg-orange-500/30 rounded-md pointer-events-none" />
-                                                )}
-                                            </div>
+                        ) : isWallDecor ? (
+                            /* Wall-Mounted Decor (Mirrors, Paintings, Curtains) - 2D floor plan: thin strip flush against wall */
+                            <div
+                                onMouseDown={(e) => startDragFurniture(e, p)}
+                                onClick={(e) => { e.stopPropagation(); onSelectFurniture(p.id); }}
+                                className={clsx(
+                                    'relative cursor-grab active:cursor-grabbing transition-all duration-200',
+                                    isSelectedFurniture && 'drop-shadow-[0_0_8px_rgba(249,115,22,0.8)]'
+                                )}
+                                title={`${furniture?.name || 'Decor'} (${furniture?.width}m × ${furniture?.height}m) - Wall Mounted`}
+                            >
+                                <div
+                                    className={clsx(
+                                        'relative rounded-sm overflow-hidden',
+                                        isSelectedFurniture
+                                            ? 'ring-2 ring-orange-400 shadow-lg shadow-orange-400/40'
+                                            : 'shadow-md hover:shadow-lg',
+                                    )}
+                                    style={{
+                                        width: displayWidth,
+                                        height: displayHeight,
+                                        background: furniture?.id.includes('mirror')
+                                            ? 'linear-gradient(135deg, #B8DCF0 0%, #E8F4FD 40%, #A8CCE0 60%, #D4E8F4 100%)'
+                                            : furniture?.id.includes('curtain')
+                                            ? `repeating-linear-gradient(${wallPosition === 'left' || wallPosition === 'right' ? '0deg' : '90deg'}, ${furniture?.color || '#d6d3d1'} 0px, ${furniture?.color || '#d6d3d1'} 3px, ${furniture?.color || '#d6d3d1'}88 3px, ${furniture?.color || '#d6d3d1'}88 6px)`
+                                            : furniture?.color || '#6366f1',
+                                        border: furniture?.id.includes('mirror')
+                                            ? '2px solid #D4AF37'
+                                            : furniture?.id.includes('curtain')
+                                            ? '1px solid #a8a29e'
+                                            : `2px solid #5D3A1A`,
+                                        boxShadow: isSelectedFurniture
+                                            ? undefined
+                                            : '1px 2px 4px rgba(0,0,0,0.3)',
+                                    }}
+                                >
+                                    {/* Mirror: add reflection highlight */}
+                                    {furniture?.id.includes('mirror') && (
+                                        <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-white/20 pointer-events-none" />
+                                    )}
+                                    {/* Painting: inner frame line */}
+                                    {!furniture?.id.includes('mirror') && !furniture?.id.includes('curtain') && (
+                                        <div 
+                                            className="absolute pointer-events-none" 
+                                            style={{
+                                                inset: 3,
+                                                border: '1px solid rgba(255,255,255,0.3)',
+                                                borderRadius: 1,
+                                            }}
+                                        />
+                                    )}
+                                </div>
+                                {/* Selection overlay */}
+                                {isSelectedFurniture && (
+                                    <div className="absolute inset-0 bg-orange-500/20 rounded-sm pointer-events-none" />
+                                )}
+                            </div>
+                        ) : isFunctionalWallItem ? (
+                            /* Functional Wall-Mounted Items (Bathroom cabinets, shelves, lighting) - show top-down at wall */
+                            <div
+                                onMouseDown={(e) => startDragFurniture(e, p)}
+                                onClick={(e) => { e.stopPropagation(); onSelectFurniture(p.id); }}
+                                className={clsx(
+                                    'rounded-md shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing transition-all duration-200 overflow-hidden',
+                                    isSelectedFurniture 
+                                        ? 'ring-3 ring-orange-400 shadow-orange-300/50 shadow-xl' 
+                                        : 'hover:scale-105',
+                                    !furniture?.image && (isSelectedFurniture ? 'bg-orange-500' : 'bg-slate-500 hover:bg-slate-400'),
+                                    furniture?.image?.endsWith('.svg') && 'bg-slate-100'
+                                )}
+                                style={{ 
+                                    width: displayWidth, 
+                                    height: displayHeight,
+                                }}
+                                title={`${furniture?.name || 'Wall Item'} (${furniture?.width}m × ${furniture?.length}m) - Wall Mounted`}
+                            >
+                                {furniture?.image ? (
+                                    <img 
+                                        src={furniture.image} 
+                                        alt={furniture.name}
+                                        className={clsx(
+                                            "w-full h-full",
+                                            furniture.image.endsWith('.svg') ? 'object-contain p-1' : 'object-cover'
                                         )}
+                                        draggable={false}
+                                    />
+                                ) : (
+                                    <FurnitureIcon className={clsx(
+                                        'w-5 h-5',
+                                        isSelectedFurniture ? 'text-white' : 'text-slate-100'
+                                    )} />
+                                )}
+                                {furniture?.image && isSelectedFurniture && (
+                                    <div className="absolute inset-0 bg-orange-500/30 rounded-md pointer-events-none" />
+                                )}
+                            </div>
+                        ) : (
+                            /* Regular Furniture Item - with Image support */
+                            <div
+                                onMouseDown={(e) => startDragFurniture(e, p)}
+                                onClick={(e) => { e.stopPropagation(); onSelectFurniture(p.id); }}
+                                className={clsx(
+                                    'rounded-lg shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing transition-all duration-200 overflow-hidden',
+                                    isSelectedFurniture 
+                                        ? 'ring-4 ring-orange-300 ring-opacity-50 shadow-orange-300/50 shadow-xl' 
+                                        : 'hover:scale-105',
+                                    !furniture?.image && (isSelectedFurniture ? 'bg-orange-500' : 'bg-amber-600 hover:bg-amber-500'),
+                                    furniture?.image?.endsWith('.svg') && 'bg-slate-100'
+                                )}
+                                style={{ 
+                                    width: displayWidth, 
+                                    height: displayHeight,
+                                }}
+                                title={`${furniture?.name || 'Furniture'} (${furniture?.width}m × ${furniture?.length}m)`}
+                            >
+                                {/* Show image if available */}
+                                {furniture?.image ? (
+                                    <img 
+                                        src={furniture.image} 
+                                        alt={furniture.name}
+                                        className={clsx(
+                                            "w-full h-full",
+                                            furniture.image.endsWith('.svg') ? 'object-contain p-1' : 'object-cover'
+                                        )}
+                                        draggable={false}
+                                    />
+                                ) : (
+                                    <FurnitureIcon className={clsx(
+                                        'w-6 h-6',
+                                        isSelectedFurniture ? 'text-white' : 'text-amber-100'
+                                    )} />
+                                )}
+                                {/* Selection overlay for images */}
+                                {furniture?.image && isSelectedFurniture && (
+                                    <div className="absolute inset-0 bg-orange-500/30 rounded-md pointer-events-none" />
+                                )}
+                            </div>
+                        )}
 
                                         {/* Controls - shown when selected */}
                                         {isSelectedFurniture && !isDragging && (
@@ -2142,7 +2628,7 @@ function GridCanvas({ room, placements, onAddFurnitureAt, zoom, catalog, selecte
                                                         <RotateCw className="w-4 h-4 text-slate-300" />
                                                     </button>
                                                 )}
-                                                {!isDoorOrWindow && (
+                                                {!isDoorOrWindow && !isWallDecor && (
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); onRotateFurniture(p.id); }}
                                                         className="p-2 hover:bg-slate-700 rounded-md transition-colors" 
@@ -2176,7 +2662,7 @@ function GridCanvas({ room, placements, onAddFurnitureAt, zoom, catalog, selecte
                                         )}
 
                                         {/* Rotation indicator - only for non-door/window */}
-                                        {isSelectedFurniture && !isDoorOrWindow && (p.rotation || 0) !== 0 && (
+                                        {isSelectedFurniture && !isDoorOrWindow && !isWallDecor && (p.rotation || 0) !== 0 && (
                                             <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 text-xs bg-slate-800 text-orange-400 px-2 py-1 rounded border border-slate-700">
                                                 {p.rotation}°
                                             </div>
@@ -3375,7 +3861,6 @@ function Door3D({ furniture, position, rotation }: Furniture3DProps) {
 // Window 3D Component - Realistic window with proper glass, frame, and outdoor view
 function Window3D({ furniture, position, rotation }: Furniture3DProps) {
     const w = furniture.width || 1.0;
-    const h = furniture.height || 1.2;
     const windowSillHeight = 0.9; // Standard window sill height
     const frameDepth = 0.12; // Match wall thickness
     
@@ -3388,7 +3873,9 @@ function Window3D({ furniture, position, rotation }: Furniture3DProps) {
     const isBayWindow = furniture.id.includes('bay');
     const isLargePicture = furniture.id.includes('large');
     
+    // For floor-to-ceiling windows, use larger height to fill the wall opening (3m wall - 0.15m margins = 2.85m)
     const actualSillHeight = isFloorToCeiling ? 0.05 : windowSillHeight;
+    const h = isFloorToCeiling ? 2.85 : (furniture.height || 1.2);
     
     return (
         <group position={[position[0], actualSillHeight, position[2]]} rotation={[0, windowRotation, 0]}>
@@ -3642,18 +4129,43 @@ function Decor3D({ furniture, position, rotation }: Furniture3DProps) {
     const h = furniture.height;
     
     if (furniture.id.includes('rug')) {
-        // Realistic rug with pattern simulation
+        // Realistic rug with layered pattern and fringe
+        const rugColor = furniture.color || '#8B4513';
         return (
             <group position={[position[0], 0.01, position[2]]} rotation={[0, (rotation * Math.PI) / 180, 0]}>
+                {/* Main rug body */}
                 <mesh receiveShadow>
-                    <boxGeometry args={[w, 0.02, d]} />
-                    <meshStandardMaterial color={furniture.color} roughness={0.95} />
+                    <boxGeometry args={[w, 0.015, d]} />
+                    <meshStandardMaterial color={rugColor} roughness={0.95} />
                 </mesh>
-                {/* Rug border */}
-                <mesh position={[0, 0.005, 0]} receiveShadow>
-                    <boxGeometry args={[w - 0.1, 0.015, d - 0.1]} />
-                    <meshStandardMaterial color={furniture.color} roughness={0.9} />
+                {/* Rug border band */}
+                <mesh position={[0, 0.008, 0]} receiveShadow>
+                    <boxGeometry args={[w - 0.06, 0.005, d - 0.06]} />
+                    <meshStandardMaterial color={rugColor} roughness={0.9} />
                 </mesh>
+                {/* Center pattern area */}
+                <mesh position={[0, 0.009, 0]} receiveShadow>
+                    <boxGeometry args={[w * 0.6, 0.004, d * 0.6]} />
+                    <meshStandardMaterial color="#F5E6D0" roughness={0.88} />
+                </mesh>
+                {/* Center medallion */}
+                <mesh position={[0, 0.011, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                    <circleGeometry args={[Math.min(w, d) * 0.18, 32]} />
+                    <meshStandardMaterial color={rugColor} roughness={0.85} />
+                </mesh>
+                {/* Fringe on short ends */}
+                {Array.from({ length: Math.floor(w / 0.04) }).map((_, i) => (
+                    <mesh key={`ff-${i}`} position={[-w / 2 + 0.02 + i * 0.04, 0.004, d / 2 + 0.015]}>
+                        <boxGeometry args={[0.008, 0.004, 0.03]} />
+                        <meshStandardMaterial color="#D4C4A8" roughness={0.95} />
+                    </mesh>
+                ))}
+                {Array.from({ length: Math.floor(w / 0.04) }).map((_, i) => (
+                    <mesh key={`fb-${i}`} position={[-w / 2 + 0.02 + i * 0.04, 0.004, -d / 2 - 0.015]}>
+                        <boxGeometry args={[0.008, 0.004, 0.03]} />
+                        <meshStandardMaterial color="#D4C4A8" roughness={0.95} />
+                    </mesh>
+                ))}
             </group>
         );
     }
@@ -3664,28 +4176,49 @@ function Decor3D({ furniture, position, rotation }: Furniture3DProps) {
         (furniture.id.includes('art') || furniture.id.includes('artwork') || furniture.id.includes('painting'));
 
     if (isMirror) {
-        // Realistic wall mirror with reflective surface
+        // Realistic wall mirror with highly reflective surface
         return (
             <group position={[position[0], 1.4, position[2]]} rotation={[0, (rotation * Math.PI) / 180, 0]}>
-                {/* Outer frame - ornate gold/wood */}
+                {/* Back panel */}
+                <mesh position={[0, 0, -0.04]} castShadow>
+                    <boxGeometry args={[w + 0.1, h + 0.1, 0.015]} />
+                    <meshStandardMaterial color="#3E2723" roughness={0.8} />
+                </mesh>
+                {/* Outer frame - carved wood */}
                 <mesh position={[0, 0, -0.025]} castShadow>
-                    <boxGeometry args={[w + 0.08, h + 0.08, 0.03]} />
-                    <meshStandardMaterial color="#8B4513" roughness={0.4} metalness={0.3} />
+                    <boxGeometry args={[w + 0.1, h + 0.1, 0.03]} />
+                    <meshStandardMaterial color="#5D4037" roughness={0.35} metalness={0.15} />
                 </mesh>
-                {/* Inner frame detail */}
-                <mesh position={[0, 0, -0.015]} castShadow>
+                {/* Inner frame bevel - gold accent */}
+                <mesh position={[0, 0, -0.012]} castShadow>
                     <boxGeometry args={[w + 0.04, h + 0.04, 0.02]} />
-                    <meshStandardMaterial color="#D4AF37" roughness={0.3} metalness={0.6} />
+                    <meshStandardMaterial color="#D4AF37" roughness={0.2} metalness={0.7} />
                 </mesh>
-                {/* Mirror glass - highly reflective */}
-                <mesh position={[0, 0, 0.001]} castShadow>
+                {/* Mirror glass - highly reflective with environment reflection */}
+                <mesh position={[0, 0, 0.001]}>
                     <planeGeometry args={[w, h]} />
                     <meshStandardMaterial 
-                        color="#c0d0e0"
-                        metalness={0.95}
+                        color="#E8F0F8"
+                        metalness={0.98}
                         roughness={0.02}
-                        envMapIntensity={1.5}
+                        envMapIntensity={2.0}
                     />
+                </mesh>
+                {/* Glass cover - slight glossy overlay */}
+                <mesh position={[0, 0, 0.003]}>
+                    <planeGeometry args={[w, h]} />
+                    <meshStandardMaterial 
+                        color="#ffffff"
+                        transparent
+                        opacity={0.08}
+                        roughness={0.0}
+                        metalness={0.1}
+                    />
+                </mesh>
+                {/* Wall mounting bracket hint */}
+                <mesh position={[0, h * 0.35, -0.05]} castShadow>
+                    <boxGeometry args={[0.06, 0.04, 0.03]} />
+                    <meshStandardMaterial color="#666666" metalness={0.8} roughness={0.3} />
                 </mesh>
             </group>
         );
@@ -3735,22 +4268,22 @@ function Decor3D({ furniture, position, rotation }: Furniture3DProps) {
                     <meshStandardMaterial color={innerFrameColor} roughness={0.4} metalness={0.3} />
                 </mesh>
                 
-                {/* Mat board - cream colored */}
+                {/* Mat board - cream colored with slight bevel */}
                 <mesh position={[0, 0, -0.015]} castShadow>
                     <boxGeometry args={[w + 0.03, h + 0.03, 0.01]} />
-                    <meshStandardMaterial color="#F5F5DC" roughness={0.9} />
+                    <meshStandardMaterial color="#F5F0E0" roughness={0.85} />
                 </mesh>
                 
-                {/* Canvas backing with texture */}
+                {/* Canvas backing with linen texture */}
                 <mesh position={[0, 0, -0.008]} castShadow>
                     <boxGeometry args={[w, h, 0.008]} />
-                    <meshStandardMaterial color="#FAF8F2" roughness={0.95} />
+                    <meshStandardMaterial color="#F8F4E8" roughness={0.95} />
                 </mesh>
                 
                 {/* Painting base layer */}
                 <mesh position={[0, 0, -0.003]}>
                     <planeGeometry args={[w - 0.02, h - 0.02]} />
-                    <meshStandardMaterial color={paintingColor} roughness={0.75} />
+                    <meshStandardMaterial color={paintingColor} roughness={0.7} />
                 </mesh>
                 
                 {/* Default painting - colorful abstract/modern art */}
@@ -4720,22 +5253,81 @@ function Decor3D({ furniture, position, rotation }: Furniture3DProps) {
                         </mesh>
                     </>
                 )}
+                {/* Glass cover - subtle reflection for framed look */}
+                <mesh position={[0, 0, 0.003]}>
+                    <planeGeometry args={[w + 0.02, h + 0.02]} />
+                    <meshStandardMaterial 
+                        color="#ffffff"
+                        transparent
+                        opacity={0.06}
+                        roughness={0.05}
+                        metalness={0.1}
+                        envMapIntensity={0.5}
+                    />
+                </mesh>
+                {/* Wall mounting wire hint on back */}
+                <mesh position={[0, h * 0.3, -0.06]} castShadow>
+                    <boxGeometry args={[0.05, 0.03, 0.02]} />
+                    <meshStandardMaterial color="#555555" metalness={0.7} roughness={0.3} />
+                </mesh>
             </group>
         );
     }
     
     if (furniture.id.includes('curtain')) {
+        const curtainColor = furniture.color || '#D6D3D1';
+        const foldCount = Math.max(6, Math.floor(w / 0.12));
         return (
             <group position={[position[0], 0, position[2]]} rotation={[0, (rotation * Math.PI) / 180, 0]}>
-                {/* Curtain rod */}
+                {/* Curtain rod - metallic */}
                 <mesh position={[0, h + 0.05, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
-                    <cylinderGeometry args={[0.015, 0.015, w + 0.1, 8]} />
-                    <meshStandardMaterial color="#c0c0c0" metalness={0.8} roughness={0.2} />
+                    <cylinderGeometry args={[0.018, 0.018, w + 0.2, 12]} />
+                    <meshStandardMaterial color="#B0B0B0" metalness={0.85} roughness={0.15} />
                 </mesh>
-                {/* Curtain fabric */}
-                <mesh position={[0, h / 2, 0]} castShadow>
-                    <boxGeometry args={[w, h, 0.03]} />
-                    <meshStandardMaterial color={furniture.color} side={THREE.DoubleSide} roughness={0.9} />
+                {/* Rod finials */}
+                <mesh position={[-(w + 0.2) / 2, h + 0.05, 0]} castShadow>
+                    <sphereGeometry args={[0.03, 12, 12]} />
+                    <meshStandardMaterial color="#B0B0B0" metalness={0.85} roughness={0.15} />
+                </mesh>
+                <mesh position={[(w + 0.2) / 2, h + 0.05, 0]} castShadow>
+                    <sphereGeometry args={[0.03, 12, 12]} />
+                    <meshStandardMaterial color="#B0B0B0" metalness={0.85} roughness={0.15} />
+                </mesh>
+                {/* Curtain rings */}
+                {Array.from({ length: 8 }).map((_, i) => (
+                    <mesh key={`ring-${i}`} position={[-w / 2 + (w / 7) * i, h + 0.05, 0]} rotation={[Math.PI / 2, 0, 0]}>
+                        <torusGeometry args={[0.025, 0.004, 8, 16]} />
+                        <meshStandardMaterial color="#C0C0C0" metalness={0.8} roughness={0.2} />
+                    </mesh>
+                ))}
+                {/* Left curtain panel with folds */}
+                {Array.from({ length: Math.ceil(foldCount / 2) }).map((_, i) => {
+                    const foldW = (w * 0.48) / Math.ceil(foldCount / 2);
+                    const xPos = -w / 2 + w * 0.01 + foldW * i + foldW / 2;
+                    const zOff = (i % 2 === 0) ? 0.01 : -0.01;
+                    return (
+                        <mesh key={`lfold-${i}`} position={[xPos, h / 2, zOff]} castShadow receiveShadow>
+                            <boxGeometry args={[foldW + 0.005, h, 0.02]} />
+                            <meshStandardMaterial color={curtainColor} roughness={0.85} side={THREE.DoubleSide} />
+                        </mesh>
+                    );
+                })}
+                {/* Right curtain panel with folds */}
+                {Array.from({ length: Math.ceil(foldCount / 2) }).map((_, i) => {
+                    const foldW = (w * 0.48) / Math.ceil(foldCount / 2);
+                    const xPos = w / 2 - w * 0.01 - foldW * i - foldW / 2;
+                    const zOff = (i % 2 === 0) ? 0.01 : -0.01;
+                    return (
+                        <mesh key={`rfold-${i}`} position={[xPos, h / 2, zOff]} castShadow receiveShadow>
+                            <boxGeometry args={[foldW + 0.005, h, 0.02]} />
+                            <meshStandardMaterial color={curtainColor} roughness={0.85} side={THREE.DoubleSide} />
+                        </mesh>
+                    );
+                })}
+                {/* Sheer/tie-back accent in the gap */}
+                <mesh position={[0, h * 0.55, 0.005]}>
+                    <planeGeometry args={[w * 0.06, h * 0.6]} />
+                    <meshStandardMaterial color="#FFFFFF" transparent opacity={0.15} roughness={0.9} side={THREE.DoubleSide} />
                 </mesh>
             </group>
         );
@@ -4875,6 +5467,15 @@ function ThreeViewport({ room, placements, catalog, onCanvasReady }: { room: Int
     
     const floorColor = room.floorColor || '#d4a574'
     const wallColor = room.wallColor || '#FAF9F6'
+    const shapeId = room.shapeId || 'square'
+    const wallHeight = 3
+    const wallThickness = 0.12
+    
+    // Get the floor vertices for the room shape
+    const floorVertices = getRoom3DFloorVertices(shapeId as RoomShapeId, room.width, room.length)
+    
+    // Get wall segments for the room shape
+    const wallSegments = getRoom3DWallSegments(shapeId as RoomShapeId, room.width, room.length)
     
     // Find all doors and windows to create wall openings
     const doorWindowPlacements = placements.filter(p => {
@@ -4884,159 +5485,236 @@ function ThreeViewport({ room, placements, catalog, onCanvasReady }: { room: Int
     }).map(p => {
         const furniture = getFurnitureById(p.furnitureId)!;
         const isWindow = furniture.id.toLowerCase().includes('window');
+        const isFloorToCeiling = furniture.id.toLowerCase().includes('floor');
+        // Floor-to-ceiling windows have minimal sill (0.05m to match Window3D), standard windows have 0.9m sill height
+        const sillHeight = isWindow ? (isFloorToCeiling ? 0.05 : 0.9) : 0;
+        // For floor-to-ceiling windows, use height that reaches close to ceiling
+        // Standard wall height is 3m, floor-to-ceiling should go from 0.05m to ~2.9m
+        const openingHeight = isFloorToCeiling ? (wallHeight - 0.15) : (furniture.height || (isWindow ? 1.2 : 2.1));
         return {
             ...p,
             furniture,
             isWindow,
+            isFloorToCeiling,
             width: furniture.width || 0.9,
-            height: furniture.height || (isWindow ? 1.2 : 2.1)
+            height: openingHeight,
+            sillHeight: sillHeight
         };
     });
     
-    // Helper to render wall segments with openings
-    const renderWallWithOpenings = (
-        wall: 'back' | 'front' | 'left' | 'right',
-        wallLength: number,
-        wallHeight: number,
-        wallThickness: number,
-        position: [number, number, number],
-        isVertical: boolean
-    ) => {
-        // Find openings on this wall - use <= 0.05 and >= 0.95 thresholds
-        const openings = doorWindowPlacements.filter(p => {
-            const nearTop = p.offsetY <= 0.05;
-            const nearBottom = p.offsetY >= 0.95;
-            const nearLeft = p.offsetX <= 0.05;
-            const nearRight = p.offsetX >= 0.95;
+    // Create floor shape geometry
+    const floorShape = React.useMemo(() => {
+        const shape = new THREE.Shape()
+        if (floorVertices.length > 0) {
+            shape.moveTo(floorVertices[0][0], floorVertices[0][1])
+            for (let i = 1; i < floorVertices.length; i++) {
+                shape.lineTo(floorVertices[i][0], floorVertices[i][1])
+            }
+            shape.closePath()
+        }
+        return shape
+    }, [shapeId, room.width, room.length])
+    
+    // Render a single wall segment
+    const renderWallSegment = (segment: WallSegment, index: number) => {
+        const dx = segment.end[0] - segment.start[0]
+        const dz = segment.end[1] - segment.start[1]
+        const wallLength = Math.sqrt(dx * dx + dz * dz)
+        const centerX = (segment.start[0] + segment.end[0]) / 2
+        const centerZ = (segment.start[1] + segment.end[1]) / 2
+        
+        // Calculate rotation angle for the wall
+        const angle = Math.atan2(dx, dz)
+        
+        // Direction vector along this wall segment (used to place openings consistently)
+        const dirX = wallLength > 0 ? dx / wallLength : 0
+        const dirZ = wallLength > 0 ? dz / wallLength : 0
+        
+        // Find openings that belong to this wall segment
+        const segmentOpenings = doorWindowPlacements.filter(p => {
+            const nearTop = p.offsetY <= 0.05
+            const nearBottom = p.offsetY >= 0.95
+            const nearLeft = p.offsetX <= 0.05
+            const nearRight = p.offsetX >= 0.95
             
-            if (wall === 'back' && nearTop) return true;
-            if (wall === 'front' && nearBottom) return true;
-            if (wall === 'left' && nearLeft) return true;
-            if (wall === 'right' && nearRight) return true;
-            return false;
+            // Map placement position to 3D coordinates
+            const px = (p.offsetX - 0.5) * room.width
+            const pz = (p.offsetY - 0.5) * room.length
+            
+            // Check if this opening is on this wall segment
+            if (segment.normal === 'back' && nearTop) {
+                return px >= Math.min(segment.start[0], segment.end[0]) - 0.1 && 
+                       px <= Math.max(segment.start[0], segment.end[0]) + 0.1
+            }
+            if (segment.normal === 'front' && nearBottom) {
+                return px >= Math.min(segment.start[0], segment.end[0]) - 0.1 && 
+                       px <= Math.max(segment.start[0], segment.end[0]) + 0.1
+            }
+            if (segment.normal === 'left' && nearLeft) {
+                return pz >= Math.min(segment.start[1], segment.end[1]) - 0.1 && 
+                       pz <= Math.max(segment.start[1], segment.end[1]) + 0.1
+            }
+            if (segment.normal === 'right' && nearRight) {
+                return pz >= Math.min(segment.start[1], segment.end[1]) - 0.1 && 
+                       pz <= Math.max(segment.start[1], segment.end[1]) + 0.1
+            }
+            return false
         }).map(p => {
-            // Calculate position along the wall (0 to 1)
-            const posAlongWall = isVertical ? p.offsetY : p.offsetX;
-            // Convert to actual position
-            const centerPos = (posAlongWall - 0.5) * wallLength;
+            // Calculate position along the wall
+            const px = (p.offsetX - 0.5) * room.width
+            const pz = (p.offsetY - 0.5) * room.length
+            const relX = px - centerX
+            const relZ = pz - centerZ
+            // Project opening center onto wall axis to avoid mirrored positions on reversed segments
+            const centerPos = relX * dirX + relZ * dirZ
+            
             return {
                 center: centerPos,
-                width: p.width + 0.12, // Add frame width
+                width: p.width + 0.12,
                 height: p.height,
                 isWindow: p.isWindow,
-                sillHeight: p.isWindow ? 0.9 : 0
-            };
-        }).sort((a, b) => a.center - b.center);
+                isFloorToCeiling: p.isFloorToCeiling,
+                sillHeight: p.sillHeight // Use the pre-calculated sill height (0 for floor-to-ceiling, 0.9 for standard windows)
+            }
+        }).sort((a, b) => a.center - b.center)
         
-        if (openings.length === 0) {
+        if (segmentOpenings.length === 0) {
             // No openings, render solid wall
             return (
-                <mesh position={position} receiveShadow>
-                    <boxGeometry args={isVertical ? [wallThickness, wallHeight, wallLength] : [wallLength, wallHeight, wallThickness]} />
+                <mesh 
+                    key={`wall-${index}`} 
+                    position={[centerX, wallHeight / 2, centerZ]} 
+                    rotation={[0, angle, 0]}
+                    receiveShadow
+                >
+                    <boxGeometry args={[wallThickness, wallHeight, wallLength]} />
                     <meshStandardMaterial color={wallColor} roughness={0.9} />
                 </mesh>
-            );
+            )
         }
         
-        // Render wall segments around openings
-        const segments: React.ReactElement[] = [];
-        let lastEnd = -wallLength / 2;
+        // Render wall with openings
+        const wallPieces: React.ReactElement[] = []
+        let lastEnd = -wallLength / 2
         
-        openings.forEach((opening, idx) => {
-            const openingStart = opening.center - opening.width / 2;
-            const openingEnd = opening.center + opening.width / 2;
+        segmentOpenings.forEach((opening, idx) => {
+            const openingStart = opening.center - opening.width / 2
+            const openingEnd = opening.center + opening.width / 2
             
-            // Wall segment before this opening
+            // Wall segment before opening
             if (openingStart > lastEnd + 0.01) {
-                const segmentWidth = openingStart - lastEnd;
-                const segmentCenter = (lastEnd + openingStart) / 2;
+                const segWidth = openingStart - lastEnd
+                const segCenter = (lastEnd + openingStart) / 2
                 
-                if (isVertical) {
-                    segments.push(
-                        <mesh key={`wall-${wall}-seg-${idx}-before`} position={[position[0], position[1], segmentCenter]} receiveShadow>
-                            <boxGeometry args={[wallThickness, wallHeight, segmentWidth]} />
-                            <meshStandardMaterial color={wallColor} roughness={0.9} />
-                        </mesh>
-                    );
-                } else {
-                    segments.push(
-                        <mesh key={`wall-${wall}-seg-${idx}-before`} position={[segmentCenter, position[1], position[2]]} receiveShadow>
-                            <boxGeometry args={[segmentWidth, wallHeight, wallThickness]} />
-                            <meshStandardMaterial color={wallColor} roughness={0.9} />
-                        </mesh>
-                    );
-                }
+                // Calculate position based on wall orientation
+                const offsetX = Math.sin(angle) * segCenter
+                const offsetZ = Math.cos(angle) * segCenter
+                
+                wallPieces.push(
+                    <mesh 
+                        key={`wall-${index}-seg-${idx}-before`} 
+                        position={[centerX + offsetX, wallHeight / 2, centerZ + offsetZ]} 
+                        rotation={[0, angle, 0]}
+                        receiveShadow
+                    >
+                        <boxGeometry args={[wallThickness, wallHeight, segWidth]} />
+                        <meshStandardMaterial color={wallColor} roughness={0.9} />
+                    </mesh>
+                )
             }
             
-            // Wall segment above the opening (for doors that don't reach ceiling, or above windows)
-            const topOfOpening = opening.sillHeight + opening.height;
+            // Wall above opening
+            const topOfOpening = opening.sillHeight + opening.height
             if (topOfOpening < wallHeight) {
-                const aboveHeight = wallHeight - topOfOpening;
-                const aboveCenter = topOfOpening + aboveHeight / 2;
+                const aboveHeight = wallHeight - topOfOpening
+                const offsetX = Math.sin(angle) * opening.center
+                const offsetZ = Math.cos(angle) * opening.center
                 
-                if (isVertical) {
-                    segments.push(
-                        <mesh key={`wall-${wall}-above-${idx}`} position={[position[0], aboveCenter, opening.center]} receiveShadow>
-                            <boxGeometry args={[wallThickness, aboveHeight, opening.width]} />
-                            <meshStandardMaterial color={wallColor} roughness={0.9} />
-                        </mesh>
-                    );
-                } else {
-                    segments.push(
-                        <mesh key={`wall-${wall}-above-${idx}`} position={[opening.center, aboveCenter, position[2]]} receiveShadow>
-                            <boxGeometry args={[opening.width, aboveHeight, wallThickness]} />
-                            <meshStandardMaterial color={wallColor} roughness={0.9} />
-                        </mesh>
-                    );
-                }
+                wallPieces.push(
+                    <mesh 
+                        key={`wall-${index}-above-${idx}`} 
+                        position={[centerX + offsetX, topOfOpening + aboveHeight / 2, centerZ + offsetZ]} 
+                        rotation={[0, angle, 0]}
+                        receiveShadow
+                    >
+                        <boxGeometry args={[wallThickness, aboveHeight, opening.width]} />
+                        <meshStandardMaterial color={wallColor} roughness={0.9} />
+                    </mesh>
+                )
             }
             
-            // Wall segment below windows (sill area)
+            // Wall below window (sill)
             if (opening.isWindow && opening.sillHeight > 0) {
-                if (isVertical) {
-                    segments.push(
-                        <mesh key={`wall-${wall}-below-${idx}`} position={[position[0], opening.sillHeight / 2, opening.center]} receiveShadow>
-                            <boxGeometry args={[wallThickness, opening.sillHeight, opening.width]} />
-                            <meshStandardMaterial color={wallColor} roughness={0.9} />
-                        </mesh>
-                    );
-                } else {
-                    segments.push(
-                        <mesh key={`wall-${wall}-below-${idx}`} position={[opening.center, opening.sillHeight / 2, position[2]]} receiveShadow>
-                            <boxGeometry args={[opening.width, opening.sillHeight, wallThickness]} />
-                            <meshStandardMaterial color={wallColor} roughness={0.9} />
-                        </mesh>
-                    );
-                }
+                const offsetX = Math.sin(angle) * opening.center
+                const offsetZ = Math.cos(angle) * opening.center
+                
+                wallPieces.push(
+                    <mesh 
+                        key={`wall-${index}-below-${idx}`} 
+                        position={[centerX + offsetX, opening.sillHeight / 2, centerZ + offsetZ]} 
+                        rotation={[0, angle, 0]}
+                        receiveShadow
+                    >
+                        <boxGeometry args={[wallThickness, opening.sillHeight, opening.width]} />
+                        <meshStandardMaterial color={wallColor} roughness={0.9} />
+                    </mesh>
+                )
             }
             
-            lastEnd = openingEnd;
-        });
+            lastEnd = openingEnd
+        })
         
-        // Wall segment after last opening
+        // Wall after last opening
         if (lastEnd < wallLength / 2 - 0.01) {
-            const segmentWidth = wallLength / 2 - lastEnd;
-            const segmentCenter = (lastEnd + wallLength / 2) / 2;
+            const segWidth = wallLength / 2 - lastEnd
+            const segCenter = (lastEnd + wallLength / 2) / 2
+            const offsetX = Math.sin(angle) * segCenter
+            const offsetZ = Math.cos(angle) * segCenter
             
-            if (isVertical) {
-                segments.push(
-                    <mesh key={`wall-${wall}-seg-end`} position={[position[0], position[1], segmentCenter]} receiveShadow>
-                        <boxGeometry args={[wallThickness, wallHeight, segmentWidth]} />
-                        <meshStandardMaterial color={wallColor} roughness={0.9} />
-                    </mesh>
-                );
-            } else {
-                segments.push(
-                    <mesh key={`wall-${wall}-seg-end`} position={[segmentCenter, position[1], position[2]]} receiveShadow>
-                        <boxGeometry args={[segmentWidth, wallHeight, wallThickness]} />
-                        <meshStandardMaterial color={wallColor} roughness={0.9} />
-                    </mesh>
-                );
-            }
+            wallPieces.push(
+                <mesh 
+                    key={`wall-${index}-seg-end`} 
+                    position={[centerX + offsetX, wallHeight / 2, centerZ + offsetZ]} 
+                    rotation={[0, angle, 0]}
+                    receiveShadow
+                >
+                    <boxGeometry args={[wallThickness, wallHeight, segWidth]} />
+                    <meshStandardMaterial color={wallColor} roughness={0.9} />
+                </mesh>
+            )
         }
         
-        return <>{segments}</>;
-    };
+        return <React.Fragment key={`wall-${index}`}>{wallPieces}</React.Fragment>
+    }
+    
+    // Render baseboards that follow the room shape
+    const renderBaseboards = () => {
+        return wallSegments.map((segment, index) => {
+            const dx = segment.end[0] - segment.start[0]
+            const dz = segment.end[1] - segment.start[1]
+            const wallLength = Math.sqrt(dx * dx + dz * dz)
+            const centerX = (segment.start[0] + segment.end[0]) / 2
+            const centerZ = (segment.start[1] + segment.end[1]) / 2
+            const angle = Math.atan2(dx, dz)
+            
+            // Offset baseboard slightly towards room center
+            const normalAngle = angle + Math.PI / 2
+            const offset = 0.07
+            const offsetX = Math.cos(normalAngle) * offset
+            const offsetZ = -Math.sin(normalAngle) * offset
+            
+            return (
+                <mesh 
+                    key={`baseboard-${index}`} 
+                    position={[centerX + offsetX, 0.05, centerZ + offsetZ]} 
+                    rotation={[0, angle, 0]}
+                >
+                    <boxGeometry args={[0.02, 0.1, wallLength - 0.1]} />
+                    <meshStandardMaterial color="#f5f5f4" />
+                </mesh>
+            )
+        })
+    }
     
     return (
         <Canvas 
@@ -5050,12 +5728,13 @@ function ThreeViewport({ room, placements, catalog, onCanvasReady }: { room: Int
             }}
         >
             <Suspense fallback={null}>
-                <ambientLight intensity={0.4} />
-                <hemisphereLight intensity={0.3} color="#fef3c7" groundColor={floorColor} />
+                <ambientLight intensity={0.5} />
+                <hemisphereLight intensity={0.4} color="#fef3c7" groundColor={floorColor} />
                 <Sky sunPosition={[100, 20, 100]} />
+                <Environment preset="apartment" background={false} />
                 <directionalLight 
                     position={[30, 45, 25]} 
-                    intensity={0.8} 
+                    intensity={0.9} 
                     castShadow 
                     shadow-mapSize={[2048, 2048]}
                     shadow-camera-far={100}
@@ -5064,43 +5743,64 @@ function ThreeViewport({ room, placements, catalog, onCanvasReady }: { room: Int
                     shadow-camera-top={20}
                     shadow-camera-bottom={-20}
                 />
+                {/* Fill light from opposite side for softer shadows */}
+                <directionalLight position={[-20, 30, -15]} intensity={0.3} />
+                {/* Point light simulating room lamp */}
+                <pointLight position={[0, 2.8, 0]} intensity={0.4} color="#FFF5E6" distance={10} decay={2} />
                 <group position={[0, 0, 0]}>
-                    {/* Floor with custom color */}
+                    {/* Floor with proper room shape */}
                     <mesh receiveShadow position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                        <planeGeometry args={[room.width, room.length]} />
-                        <meshStandardMaterial color={floorColor} roughness={0.8} />
+                        <shapeGeometry args={[floorShape]} />
+                        <meshStandardMaterial color={floorColor} roughness={0.8} side={THREE.DoubleSide} />
                     </mesh>
-                    {/* Floor planks pattern (for wood-like colors) */}
-                    {floorColor.match(/#[89abcd]/i) && Array.from({ length: Math.ceil(room.width / 0.15) }).map((_, i) => (
-                        <mesh key={`plank-${i}`} position={[-room.width / 2 + i * 0.15 + 0.075, -0.04, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                            <planeGeometry args={[0.01, room.length]} />
-                            <meshStandardMaterial color="#5D4037" opacity={0.3} transparent />
-                        </mesh>
-                    ))}
                     
-                    {/* Walls with openings for doors/windows */}
-                    {renderWallWithOpenings('back', room.width, 3, 0.12, [0, 1.5, -room.length / 2], false)}
-                    {renderWallWithOpenings('front', room.width, 3, 0.12, [0, 1.5, room.length / 2], false)}
-                    {renderWallWithOpenings('left', room.length, 3, 0.12, [-room.width / 2, 1.5, 0], true)}
-                    {renderWallWithOpenings('right', room.length, 3, 0.12, [room.width / 2, 1.5, 0], true)}
+                    {/* Floor planks pattern (for wood-like colors) - only inside the room shape */}
+                    {floorColor.match(/#[89abcd]/i) && Array.from({ length: Math.ceil(room.width / 0.15) }).map((_, i) => {
+                        const plankX = -room.width / 2 + i * 0.15 + 0.075
+                        // Check if this plank line is inside the room shape
+                        const normalizedX = (plankX + room.width / 2) / room.width
+                        // For L-shaped rooms, skip planks in the cut-out area
+                        const isLShape = shapeId === 'l-right' || shapeId === 'l-left' || shapeId === 'l-corner'
+                        
+                        if (isLShape) {
+                            // Calculate which sections of the plank are inside the room
+                            const segments: { start: number, end: number }[] = []
+                            
+                            if (shapeId === 'l-right' && normalizedX > 0.55) {
+                                // Right side of L-right: only from 45% to 100% of length
+                                segments.push({ start: room.length * 0.45 - room.length / 2, end: room.length / 2 })
+                            } else if (shapeId === 'l-left' && normalizedX < 0.45) {
+                                // Left side of L-left: only from 45% to 100% of length
+                                segments.push({ start: room.length * 0.45 - room.length / 2, end: room.length / 2 })
+                            } else if (shapeId === 'l-corner' && normalizedX > 0.45) {
+                                // Right side of L-corner: only from 55% to 100% of length
+                                segments.push({ start: room.length * 0.55 - room.length / 2, end: room.length / 2 })
+                            } else {
+                                // Full length
+                                segments.push({ start: -room.length / 2, end: room.length / 2 })
+                            }
+                            
+                            return segments.map((seg, segIdx) => (
+                                <mesh key={`plank-${i}-${segIdx}`} position={[plankX, -0.04, (seg.start + seg.end) / 2]} rotation={[-Math.PI / 2, 0, 0]}>
+                                    <planeGeometry args={[0.01, seg.end - seg.start]} />
+                                    <meshStandardMaterial color="#5D4037" opacity={0.3} transparent />
+                                </mesh>
+                            ))
+                        }
+                        
+                        return (
+                            <mesh key={`plank-${i}`} position={[plankX, -0.04, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                                <planeGeometry args={[0.01, room.length]} />
+                                <meshStandardMaterial color="#5D4037" opacity={0.3} transparent />
+                            </mesh>
+                        )
+                    })}
                     
-                    {/* Baseboards */}
-                    <mesh position={[0, 0.05, -room.length / 2 + 0.07]}>
-                        <boxGeometry args={[room.width - 0.1, 0.1, 0.02]} />
-                        <meshStandardMaterial color="#f5f5f4" />
-                    </mesh>
-                    <mesh position={[0, 0.05, room.length / 2 - 0.07]}>
-                        <boxGeometry args={[room.width - 0.1, 0.1, 0.02]} />
-                        <meshStandardMaterial color="#f5f5f4" />
-                    </mesh>
-                    <mesh position={[-room.width / 2 + 0.07, 0.05, 0]}>
-                        <boxGeometry args={[0.02, 0.1, room.length - 0.1]} />
-                        <meshStandardMaterial color="#f5f5f4" />
-                    </mesh>
-                    <mesh position={[room.width / 2 - 0.07, 0.05, 0]}>
-                        <boxGeometry args={[0.02, 0.1, room.length - 0.1]} />
-                        <meshStandardMaterial color="#f5f5f4" />
-                    </mesh>
+                    {/* Walls - render each wall segment */}
+                    {wallSegments.map((segment, index) => renderWallSegment(segment, index))}
+                    
+                    {/* Baseboards following room shape */}
+                    {renderBaseboards()}
                     
                     {/* Furniture - rendered with proper 3D models */}
                     {placements.map(p => {
@@ -5112,7 +5812,11 @@ function ThreeViewport({ room, placements, catalog, onCanvasReady }: { room: Int
                         
                         // For wall-mounted items, position exactly at wall
                         const isWallMounted = isWallMountedFurniture(furniture);
+                        const isDoorOrWindowItem = furniture.category === 'Doors';
+                        const isWallDecorItem = isWallMounted && !isDoorOrWindowItem;
                         const WALL_THICKNESS = 0.06; // Half of wall thickness (0.12/2)
+                        let wallFacingRotation = p.rotation || 0;
+                        
                         if (isWallMounted) {
                             // Determine which wall based on offset - use <= 0.05 and >= 0.95 thresholds
                             const nearTop = p.offsetY <= 0.05;
@@ -5121,13 +5825,21 @@ function ThreeViewport({ room, placements, catalog, onCanvasReady }: { room: Int
                             const nearRight = p.offsetX >= 0.95;
                             
                             if (nearTop) {
-                                z = -room.length / 2 + WALL_THICKNESS; // Back wall - align with wall center
+                                z = -room.length / 2 + WALL_THICKNESS;
+                                // Top/back wall: item faces +Z (into room) - default orientation
+                                if (isWallDecorItem) wallFacingRotation = 0;
                             } else if (nearBottom) {
-                                z = room.length / 2 - WALL_THICKNESS; // Front wall
+                                z = room.length / 2 - WALL_THICKNESS;
+                                // Bottom/front wall: item faces -Z (into room from front)
+                                if (isWallDecorItem) wallFacingRotation = 180;
                             } else if (nearLeft) {
-                                x = -room.width / 2 + WALL_THICKNESS; // Left wall
+                                x = -room.width / 2 + WALL_THICKNESS;
+                                // Left wall: item faces +X (into room from left)
+                                if (isWallDecorItem) wallFacingRotation = -90;
                             } else if (nearRight) {
-                                x = room.width / 2 - WALL_THICKNESS; // Right wall
+                                x = room.width / 2 - WALL_THICKNESS;
+                                // Right wall: item faces -X (into room from right)
+                                if (isWallDecorItem) wallFacingRotation = 90;
                             }
                         }
                         
@@ -5136,7 +5848,7 @@ function ThreeViewport({ room, placements, catalog, onCanvasReady }: { room: Int
                                 key={p.id}
                                 furniture={furniture}
                                 position={[x, 0, z]}
-                                rotation={p.rotation || 0}
+                                rotation={wallFacingRotation}
                             />
                         );
                     })}

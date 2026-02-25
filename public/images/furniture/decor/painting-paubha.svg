@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 130" width="100" height="130">
+  <defs>
+    <linearGradient id="pb-gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#DAA520"/>
+      <stop offset="50%" stop-color="#FFD700"/>
+      <stop offset="100%" stop-color="#B8860B"/>
+    </linearGradient>
+    <linearGradient id="pb-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8B0000"/>
+      <stop offset="100%" stop-color="#5C0000"/>
+    </linearGradient>
+    <radialGradient id="pb-halo" cx="0.5" cy="0.4" r="0.4">
+      <stop offset="0%" stop-color="#FFD700" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#8B0000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Shadow -->
+  <rect x="4" y="4" width="96" height="126" rx="2" fill="rgba(0,0,0,0.3)"/>
+  <!-- Outer frame - ornate gold -->
+  <rect x="0" y="0" width="96" height="126" rx="3" fill="url(#pb-gold)" stroke="#8B6914" stroke-width="1.5"/>
+  <!-- Frame decorative dots -->
+  <circle cx="8" cy="8" r="2" fill="#B8860B"/>
+  <circle cx="88" cy="8" r="2" fill="#B8860B"/>
+  <circle cx="8" cy="118" r="2" fill="#B8860B"/>
+  <circle cx="88" cy="118" r="2" fill="#B8860B"/>
+  <circle cx="48" cy="5" r="2" fill="#B8860B"/>
+  <circle cx="48" cy="121" r="2" fill="#B8860B"/>
+  <!-- Frame decorative lines -->
+  <rect x="4" y="4" width="88" height="118" rx="2" fill="none" stroke="#8B6914" stroke-width="0.8"/>
+  <!-- Inner frame -->
+  <rect x="8" y="8" width="80" height="110" rx="2" fill="#5C0000" stroke="#DAA520" stroke-width="1"/>
+  <!-- Canvas -->
+  <rect x="12" y="12" width="72" height="102" fill="url(#pb-bg)"/>
+  <!-- Halo/mandala background -->
+  <circle cx="48" cy="50" r="28" fill="url(#pb-halo)"/>
+  <circle cx="48" cy="50" r="26" fill="none" stroke="#FFD700" stroke-width="0.5" opacity="0.6"/>
+  <circle cx="48" cy="50" r="22" fill="none" stroke="#FFD700" stroke-width="0.4" opacity="0.4"/>
+  <!-- Deity figure - simplified seated form -->
+  <!-- Lotus base -->
+  <ellipse cx="48" cy="85" rx="18" ry="5" fill="#DAA520" opacity="0.6"/>
+  <path d="M30,85 Q34,80 38,85 Q42,80 46,85 Q50,80 54,85 Q58,80 62,85 Q66,80 66,85" fill="none" stroke="#FFD700" stroke-width="0.8"/>
+  <!-- Body -->
+  <path d="M40,85 Q38,70 40,60 L48,55 L56,60 Q58,70 56,85" fill="#DAA520" opacity="0.5"/>
+  <!-- Head -->
+  <circle cx="48" cy="45" r="8" fill="#DAA520" opacity="0.6"/>
+  <circle cx="48" cy="45" r="7" fill="none" stroke="#FFD700" stroke-width="0.5"/>
+  <!-- Crown -->
+  <path d="M41,39 L44,32 L48,36 L52,32 L55,39" fill="#FFD700" opacity="0.7"/>
+  <!-- Face features -->
+  <circle cx="45" cy="44" r="1" fill="#5C0000"/>
+  <circle cx="51" cy="44" r="1" fill="#5C0000"/>
+  <path d="M45,48 Q48,50 51,48" fill="none" stroke="#5C0000" stroke-width="0.5"/>
+  <!-- Third eye -->
+  <circle cx="48" cy="41" r="0.8" fill="#FFD700"/>
+  <!-- Arms -->
+  <path d="M40,62 Q30,65 28,58" fill="none" stroke="#DAA520" stroke-width="1.5"/>
+  <path d="M56,62 Q66,65 68,58" fill="none" stroke="#DAA520" stroke-width="1.5"/>
+  <!-- Hands holding items -->
+  <circle cx="27" cy="57" r="2.5" fill="#FFD700" opacity="0.5"/>
+  <circle cx="69" cy="57" r="2.5" fill="#FFD700" opacity="0.5"/>
+  <!-- Decorative border pattern -->
+  <rect x="12" y="12" width="72" height="102" fill="none" stroke="#FFD700" stroke-width="0.8" stroke-dasharray="3,3"/>
+  <!-- Corner ornaments -->
+  <path d="M14,14 Q20,14 20,20" fill="none" stroke="#FFD700" stroke-width="1"/>
+  <path d="M82,14 Q76,14 76,20" fill="none" stroke="#FFD700" stroke-width="1"/>
+  <path d="M14,112 Q20,112 20,106" fill="none" stroke="#FFD700" stroke-width="1"/>
+  <path d="M82,112 Q76,112 76,106" fill="none" stroke="#FFD700" stroke-width="1"/>
+  <!-- Flame mandorla -->
+  <path d="M48,30 Q60,35 62,50 Q60,65 48,75 Q36,65 34,50 Q36,35 48,30" fill="none" stroke="#FF6347" stroke-width="0.6" opacity="0.5"/>
+</svg>

@@ -1,7 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 3" width="90" height="3">
-  <!-- Wall Art - Top View Floor Plan (very thin, mounted on wall) -->
-  <!-- Frame -->
-  <rect x="0" y="0" width="90" height="3" fill="#78350F" stroke="#5D3A1A" stroke-width="0.5"/>
-  <!-- Canvas edge -->
-  <rect x="2" y="0.5" width="86" height="2" fill="#F5F5F4"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 100" width="140" height="100">
+  <defs>
+    <linearGradient id="canvas" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7C6FA0"/>
+      <stop offset="30%" style="stop-color:#6366F1"/>
+      <stop offset="70%" style="stop-color:#5B5BD6"/>
+      <stop offset="100%" style="stop-color:#8478C8"/>
+    </linearGradient>
+  </defs>
+  <rect x="6" y="6" width="132" height="92" rx="2" fill="#00000025"/>
+  <rect x="1" y="1" width="138" height="98" rx="2" fill="#5D3A1A" stroke="#3E2512" stroke-width="1.5"/>
+  <rect x="4" y="4" width="132" height="92" rx="1" fill="#78350F" stroke="#5D3A1A" stroke-width="0.8"/>
+  <rect x="8" y="8" width="124" height="84" fill="#F5F5F0"/>
+  <rect x="12" y="12" width="116" height="76" fill="url(#canvas)"/>
+  <circle cx="55" cy="40" r="18" fill="#FFD700" opacity="0.4"/>
+  <circle cx="55" cy="40" r="12" fill="#FFA500" opacity="0.3"/>
+  <rect x="80" y="25" width="30" height="45" rx="2" fill="#4338CA" opacity="0.6"/>
+  <rect x="25" y="55" width="40" height="15" rx="1" fill="#312E81" opacity="0.4"/>
+  <path d="M 30 30 Q 50 20 70 35 T 110 28" fill="none" stroke="#E0D4F5" stroke-width="2" opacity="0.5"/>
+  <circle cx="100" cy="65" r="8" fill="#818CF8" opacity="0.5"/>
+  <rect x="35" y="35" width="8" height="20" fill="#C7D2FE" opacity="0.3" transform="rotate(-15 39 45)"/>
 </svg>

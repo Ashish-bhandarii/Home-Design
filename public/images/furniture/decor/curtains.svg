@@ -1,26 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 10" width="150" height="10">
-  <!-- Curtain Panel - Top View Floor Plan -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 200" width="160" height="200">
   <defs>
-    <linearGradient id="curtainFabric" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#D6D3D1"/>
-      <stop offset="15%" style="stop-color:#E7E5E4"/>
-      <stop offset="30%" style="stop-color:#D6D3D1"/>
-      <stop offset="45%" style="stop-color:#E7E5E4"/>
-      <stop offset="60%" style="stop-color:#D6D3D1"/>
-      <stop offset="75%" style="stop-color:#E7E5E4"/>
-      <stop offset="90%" style="stop-color:#D6D3D1"/>
-      <stop offset="100%" style="stop-color:#E7E5E4"/>
+    <linearGradient id="fabric1" x1="0%" y1="0%" x2="5%" y2="0%">
+      <stop offset="0%" style="stop-color:#B8B3AD"/>
+      <stop offset="50%" style="stop-color:#D6D3D1"/>
+      <stop offset="100%" style="stop-color:#C4BFB9"/>
     </linearGradient>
   </defs>
-  <!-- Curtain folds -->
-  <rect x="0" y="0" width="150" height="10" fill="url(#curtainFabric)" stroke="#A8A29E" stroke-width="1"/>
-  <!-- Fold lines -->
-  <g stroke="#A8A29E" stroke-width="0.5">
-    <line x1="15" y1="0" x2="15" y2="10"/>
-    <line x1="37" y1="0" x2="37" y2="10"/>
-    <line x1="60" y1="0" x2="60" y2="10"/>
-    <line x1="82" y1="0" x2="82" y2="10"/>
-    <line x1="105" y1="0" x2="105" y2="10"/>
-    <line x1="127" y1="0" x2="127" y2="10"/>
+  <!-- Curtain rod -->
+  <rect x="5" y="2" width="150" height="5" rx="2.5" fill="#8B7355" stroke="#6B5B45" stroke-width="0.5"/>
+  <circle cx="8" cy="4.5" r="4" fill="#A08968" stroke="#6B5B45" stroke-width="0.5"/>
+  <circle cx="152" cy="4.5" r="4" fill="#A08968" stroke="#6B5B45" stroke-width="0.5"/>
+  <!-- Left curtain panel -->
+  <g>
+    <path d="M 10 8 Q 15 8 18 10 Q 22 8 27 10 Q 32 8 35 10 Q 40 8 45 10 Q 48 8 52 10 L 55 8 L 55 195 Q 48 193 45 195 Q 40 193 35 195 Q 30 193 27 195 Q 22 193 18 195 Q 15 193 10 195 Z" fill="#D6D3D1" stroke="#A8A29E" stroke-width="0.5"/>
+    <!-- Fold shadows -->
+    <path d="M 18 10 L 18 195" stroke="#B8B3AD" stroke-width="2" opacity="0.5"/>
+    <path d="M 27 10 L 27 195" stroke="#C4BFB9" stroke-width="3" opacity="0.3"/>
+    <path d="M 35 10 L 35 195" stroke="#B8B3AD" stroke-width="2" opacity="0.5"/>
+    <path d="M 45 10 L 45 195" stroke="#C4BFB9" stroke-width="3" opacity="0.3"/>
+    <!-- Light effect -->
+    <path d="M 22 10 L 22 195" stroke="#E8E5E2" stroke-width="1.5" opacity="0.4"/>
+    <path d="M 40 10 L 40 195" stroke="#E8E5E2" stroke-width="1.5" opacity="0.4"/>
   </g>
+  <!-- Right curtain panel -->
+  <g>
+    <path d="M 105 8 Q 110 8 113 10 Q 117 8 122 10 Q 127 8 130 10 Q 135 8 140 10 Q 143 8 147 10 L 150 8 L 150 195 Q 143 193 140 195 Q 135 193 130 195 Q 125 193 122 195 Q 117 193 113 195 Q 110 193 105 195 Z" fill="#D6D3D1" stroke="#A8A29E" stroke-width="0.5"/>
+    <path d="M 113 10 L 113 195" stroke="#B8B3AD" stroke-width="2" opacity="0.5"/>
+    <path d="M 122 10 L 122 195" stroke="#C4BFB9" stroke-width="3" opacity="0.3"/>
+    <path d="M 130 10 L 130 195" stroke="#B8B3AD" stroke-width="2" opacity="0.5"/>
+    <path d="M 140 10 L 140 195" stroke="#C4BFB9" stroke-width="3" opacity="0.3"/>
+    <path d="M 117 10 L 117 195" stroke="#E8E5E2" stroke-width="1.5" opacity="0.4"/>
+    <path d="M 135 10 L 135 195" stroke="#E8E5E2" stroke-width="1.5" opacity="0.4"/>
+  </g>
+  <!-- Center gap (window visible behind) -->
+  <rect x="55" y="8" width="50" height="187" fill="#87CEEB" opacity="0.15"/>
+  <!-- Tie-backs -->
+  <ellipse cx="52" cy="120" rx="5" ry="8" fill="#A08968" stroke="#7A6548" stroke-width="0.5" opacity="0.8"/>
+  <ellipse cx="108" cy="120" rx="5" ry="8" fill="#A08968" stroke="#7A6548" stroke-width="0.5" opacity="0.8"/>
 </svg>

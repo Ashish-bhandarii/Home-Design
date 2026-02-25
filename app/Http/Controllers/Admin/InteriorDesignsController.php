@@ -44,7 +44,25 @@ class InteriorDesignsController extends Controller
             });
         }
 
-        $designs = $query->latest()->paginate(12)->withQueryString();
+        $designs = $query->latest()->paginate(12)->withQueryString()->through(function ($design) {
+            return [
+                'id' => $design->id,
+                'name' => $design->name,
+                'description' => $design->description,
+                'room_type' => $design->room_type,
+                'style' => $design->style,
+                'area_sqft' => $design->area_sqft,
+                'cover_image' => $design->cover_image,
+                'cover_image_url' => $design->cover_image
+                    ? url(Storage::url($design->cover_image))
+                    : null,
+                'is_featured' => $design->is_featured,
+                'is_active' => $design->is_active,
+                'views' => $design->views,
+                'downloads' => $design->downloads,
+                'created_at' => $design->created_at,
+            ];
+        });
 
         return Inertia::render('admin/interior-designs/index', [
             'designs' => $designs,
@@ -92,13 +110,19 @@ class InteriorDesignsController extends Controller
             'estimated_cost_min' => 'nullable|numeric|min:0',
             'estimated_cost_max' => 'nullable|numeric|min:0',
             'cover_image' => 'nullable|image|max:5120',
+            'gallery_images.*' => 'nullable|image|max:5120',
+            'design_files.*' => 'nullable|file|max:51200',
             'furniture_items' => 'nullable|array',
             'color_palette' => 'nullable|array',
             'features' => 'nullable|array',
             'tags' => 'nullable|array',
-            'is_featured' => 'boolean',
-            'is_active' => 'boolean',
+            'is_featured' => 'sometimes|boolean',
+            'is_active' => 'sometimes|boolean',
         ]);
+
+        // Set booleans properly
+        $validated['is_featured'] = $request->boolean('is_featured');
+        $validated['is_active'] = $request->boolean('is_active');
 
         DB::beginTransaction();
 
@@ -156,7 +180,54 @@ class InteriorDesignsController extends Controller
         $interiorDesign->load(['files', 'images']);
 
         return Inertia::render('admin/interior-designs/edit', [
-            'interiorDesign' => $interiorDesign,
+            'interiorDesign' => [
+                'id' => $interiorDesign->id,
+                'name' => $interiorDesign->name,
+                'description' => $interiorDesign->description,
+                'room_type' => $interiorDesign->room_type,
+                'style' => $interiorDesign->style,
+                'room_width' => $interiorDesign->room_width,
+                'room_length' => $interiorDesign->room_length,
+                'room_height' => $interiorDesign->room_height,
+                'area_sqft' => $interiorDesign->area_sqft,
+                'color_scheme' => $interiorDesign->color_scheme,
+                'primary_material' => $interiorDesign->primary_material,
+                'flooring_type' => $interiorDesign->flooring_type,
+                'ceiling_type' => $interiorDesign->ceiling_type,
+                'lighting_type' => $interiorDesign->lighting_type,
+                'estimated_cost_min' => $interiorDesign->estimated_cost_min,
+                'estimated_cost_max' => $interiorDesign->estimated_cost_max,
+                'furniture_items' => $interiorDesign->furniture_items,
+                'color_palette' => $interiorDesign->color_palette,
+                'features' => $interiorDesign->features,
+                'tags' => $interiorDesign->tags,
+                'cover_image' => $interiorDesign->cover_image,
+                'cover_image_url' => $interiorDesign->cover_image
+                    ? url(Storage::url($interiorDesign->cover_image))
+                    : null,
+                'images' => $interiorDesign->images->map(function ($image) {
+                    return [
+                        'id' => $image->id,
+                        'image_path' => $image->image_path,
+                        'image_url' => $image->image_path
+                            ? url(Storage::url($image->image_path))
+                            : null,
+                        'sort_order' => $image->sort_order,
+                    ];
+                })->values(),
+                'files' => $interiorDesign->files->map(function ($file) {
+                    return [
+                        'id' => $file->id,
+                        'title' => $file->title,
+                        'file_type' => $file->file_type,
+                        'file_path' => $file->file_path,
+                        'file_extension' => $file->file_extension,
+                        'file_size' => $file->file_size ? number_format($file->file_size / 1024 / 1024, 2) . ' MB' : null,
+                    ];
+                })->values(),
+                'is_featured' => $interiorDesign->is_featured,
+                'is_active' => $interiorDesign->is_active,
+            ],
             'roomTypeOptions' => InteriorDesign::roomTypeOptions(),
             'styleOptions' => InteriorDesign::styleOptions(),
             'flooringTypeOptions' => InteriorDesign::flooringTypeOptions(),
@@ -189,6 +260,8 @@ class InteriorDesignsController extends Controller
             'estimated_cost_min' => 'nullable|numeric|min:0',
             'estimated_cost_max' => 'nullable|numeric|min:0',
             'cover_image' => 'nullable|image|max:5120',
+            'gallery_images.*' => 'nullable|image|max:5120',
+            'design_files.*' => 'nullable|file|max:51200',
             'furniture_items' => 'nullable|array',
             'color_palette' => 'nullable|array',
             'features' => 'nullable|array',
@@ -196,6 +269,10 @@ class InteriorDesignsController extends Controller
             'is_featured' => 'sometimes|boolean',
             'is_active' => 'sometimes|boolean',
         ]);
+
+        // Set booleans properly
+        $validated['is_featured'] = $request->boolean('is_featured');
+        $validated['is_active'] = $request->boolean('is_active');
 
         DB::beginTransaction();
 

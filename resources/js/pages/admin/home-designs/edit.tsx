@@ -1,13 +1,23 @@
 import AdminLayout from '@/layouts/admin-layout';
 import admin from '@/routes/admin';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { ArrowLeft, Home, Image as ImageIcon, Save, Trash2, X } from 'lucide-react';
+import { ArrowLeft, FilePlus, Home, Image as ImageIcon, Save, Trash2, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 interface DesignImage {
     id: number;
     image_path: string;
+    image_url?: string | null;
     sort_order: number;
+}
+
+interface DesignFile {
+    id: number;
+    title: string;
+    file_type: string;
+    file_path: string;
+    file_extension: string;
+    file_size: string | null;
 }
 
 interface Props {
@@ -40,11 +50,14 @@ interface Props {
         is_featured: boolean;
         is_active: boolean;
         cover_image: string | null;
+        cover_image_url?: string | null;
         images: DesignImage[];
+        files: DesignFile[];
     };
     styleOptions: Record<string, string>;
     constructionTypeOptions: Record<string, string>;
     facingDirectionOptions: Record<string, string>;
+    fileTypeOptions: Record<string, string>;
 }
 
 interface FormData {
@@ -76,6 +89,9 @@ interface FormData {
     is_active: boolean;
     cover_image: File | null;
     gallery_images: File[];
+    design_files: (File | undefined)[];
+    design_files_types: string[];
+    design_files_titles: (string | null)[];
 }
 
 export default function HomeDesignsEdit({
@@ -83,6 +99,7 @@ export default function HomeDesignsEdit({
     styleOptions,
     constructionTypeOptions,
     facingDirectionOptions,
+    fileTypeOptions,
 }: Props) {
     const { data, setData, processing, errors, progress, clearErrors } = useForm<FormData>({
         name: homeDesign.name,
@@ -113,6 +130,9 @@ export default function HomeDesignsEdit({
         is_active: homeDesign.is_active,
         cover_image: null,
         gallery_images: [],
+        design_files: [],
+        design_files_types: [],
+        design_files_titles: [],
     });
 
     const [featureInput, setFeatureInput] = useState('');
@@ -125,6 +145,33 @@ export default function HomeDesignsEdit({
                 preserveState: false,
             });
         }
+    };
+
+    const deleteFile = (fileId: number) => {
+        if (confirm('Are you sure you want to delete this file?')) {
+            router.delete(admin.homeDesigns.deleteFile({ homeDesign: homeDesign.id, file: fileId }).url, {
+                preserveScroll: true,
+                preserveState: false,
+            });
+        }
+    };
+
+    const addDesignFileInput = () => {
+        setData((data) => ({
+            ...data,
+            design_files: [...data.design_files, undefined],
+            design_files_types: [...data.design_files_types, 'other'],
+            design_files_titles: [...data.design_files_titles, ''],
+        }));
+    };
+
+    const removeDesignFileInput = (index: number) => {
+        setData((data) => ({
+            ...data,
+            design_files: data.design_files.filter((_, i) => i !== index),
+            design_files_types: data.design_files_types.filter((_, i) => i !== index),
+            design_files_titles: data.design_files_titles.filter((_, i) => i !== index),
+        }));
     };
 
     const addFeature = () => {
@@ -187,6 +234,14 @@ export default function HomeDesignsEdit({
 
         data.gallery_images.forEach((file, i) => {
             formData.append(`gallery_images[${i}]`, file);
+        });
+
+        data.design_files.forEach((file, i) => {
+            if (file) formData.append(`design_files[${i}]`, file);
+        });
+        data.design_files_types.forEach((type, i) => formData.append(`design_files_types[${i}]`, type));
+        data.design_files_titles.forEach((title, i) => {
+            if (title) formData.append(`design_files_titles[${i}]`, title);
         });
         
         // Use _method for Laravel to handle as PUT
@@ -441,7 +496,7 @@ export default function HomeDesignsEdit({
                             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center dark:border-slate-600 dark:bg-slate-900">
                                 {homeDesign.cover_image ? (
                                     <img
-                                        src={`/storage/${homeDesign.cover_image}`}
+                                        src={homeDesign.cover_image_url ?? (homeDesign.cover_image.startsWith('http') ? homeDesign.cover_image : `/storage/${homeDesign.cover_image}`)}
                                         alt={homeDesign.name}
                                         className="mx-auto max-h-40 w-auto rounded-xl object-cover"
                                     />
@@ -546,6 +601,121 @@ export default function HomeDesignsEdit({
                     </div>
                 </section>
 
+                {/* Design Files */}
+                <section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+                    <h2 className="mb-6 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
+                        <FilePlus className="h-5 w-5 text-indigo-600" />
+                        Design Files used in Downloads
+                    </h2>
+
+                    {/* Existing Files */}
+                    {homeDesign.files && homeDesign.files.length > 0 && (
+                        <div className="mb-6 space-y-2">
+                            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">Attached Files</h3>
+                            {homeDesign.files.map((file) => (
+                                <div key={file.id} className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
+                                            <span className="text-xs font-bold uppercase">{file.file_extension}</span>
+                                        </div>
+                                        <div>
+                                            <div className="font-medium text-slate-900 dark:text-white">{file.title || file.file_path.split('/').pop()}</div>
+                                            <div className="text-xs text-slate-500">{file.file_size} • {file.file_type}</div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => deleteFile(file.id)}
+                                        className="rounded-lg p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                                        title="Delete file"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Add New Files */}
+                    <div>
+                        <h3 className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">Upload New Files</h3>
+                        <div className="space-y-4">
+                            {data.design_files.map((_, i) => (
+                                <div key={i} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+                                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                        <div>
+                                            <label className="mb-1 block text-xs font-medium">Title (Optional)</label>
+                                            <input
+                                                type="text"
+                                                value={data.design_files_titles[i] || ''}
+                                                onChange={(e) => {
+                                                    const titles = [...data.design_files_titles];
+                                                    titles[i] = e.target.value;
+                                                    setData('design_files_titles', titles);
+                                                }}
+                                                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700"
+                                                placeholder="E.g. Floor Plan PDF"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="mb-1 block text-xs font-medium">File Type</label>
+                                            <select
+                                                value={data.design_files_types[i]}
+                                                onChange={(e) => {
+                                                    const types = [...data.design_files_types];
+                                                    types[i] = e.target.value;
+                                                    setData('design_files_types', types);
+                                                }}
+                                                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700"
+                                            >
+                                                {Object.entries(fileTypeOptions).map(([value, label]) => (
+                                                    <option key={value} value={value}>{label}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="mb-1 block text-xs font-medium">Select File (Max 50MB)</label>
+                                            <input
+                                                type="file"
+                                                onChange={(e) => {
+                                                    const file = e.target.files ? e.target.files[0] : undefined;
+                                                    if (file && file.size > 50 * 1024 * 1024) {
+                                                        alert(`File ${file.name} exceeds 50MB limit.`);
+                                                        e.target.value = '';
+                                                        return;
+                                                    }
+                                                    const files = [...data.design_files];
+                                                    files[i] = file;
+                                                    setData('design_files', files);
+                                                }}
+                                                className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs file:mr-2 file:rounded-md file:border-0 file:bg-indigo-600 file:px-3 file:py-1 file:text-xs file:font-medium file:text-white hover:file:bg-indigo-700 dark:border-slate-600 dark:bg-slate-700"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="mt-2 flex justify-end">
+                                        <button
+                                            type="button"
+                                            onClick={() => removeDesignFileInput(i)}
+                                            className="inline-flex items-center gap-1 text-xs font-medium text-red-600 hover:text-red-700 dark:text-red-400"
+                                        >
+                                            <X className="h-3 w-3" /> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                            
+                            <button
+                                type="button"
+                                onClick={addDesignFileInput}
+                                className="inline-flex items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                            >
+                                <FilePlus className="h-4 w-4" />
+                                Add Another File
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
                 {/* Gallery Images */}
                 <section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
                     <h2 className="mb-6 text-lg font-semibold text-slate-900 dark:text-white">Gallery Images</h2>
@@ -556,7 +726,7 @@ export default function HomeDesignsEdit({
                             {homeDesign.images.map((image) => (
                                 <div key={image.id} className="group relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-700">
                                     <img
-                                        src={`/storage/${image.image_path}`}
+                                        src={image.image_url ?? (image.image_path.startsWith('http') ? image.image_path : `/storage/${image.image_path}`)}
                                         alt={`Gallery image ${image.id}`}
                                         className="h-full w-full object-cover"
                                     />
@@ -597,7 +767,15 @@ export default function HomeDesignsEdit({
                                             className="sr-only"
                                             onChange={(e) => {
                                                 if (e.target.files) {
-                                                    setData('gallery_images', Array.from(e.target.files));
+                                                    const files = Array.from(e.target.files);
+                                                    const validFiles = files.filter(file => {
+                                                        if (file.size > 5 * 1024 * 1024) {
+                                                            alert(`Image ${file.name} exceeds 5MB limit.`);
+                                                            return false;
+                                                        }
+                                                        return true;
+                                                    });
+                                                    setData('gallery_images', validFiles);
                                                 }
                                             }}
                                         />

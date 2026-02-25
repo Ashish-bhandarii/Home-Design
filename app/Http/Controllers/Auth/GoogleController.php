@@ -36,16 +36,25 @@ class GoogleController extends Controller
                 'google_id' => $googleUser->getId(),
                 'avatar' => $googleUser->getAvatar(),
             ]);
+            
+            $isNewUser = true;
         } else {
             $user->forceFill([
                 'google_id' => $user->google_id ?: $googleUser->getId(),
                 'avatar' => $googleUser->getAvatar() ?: $user->avatar,
             ])->save();
+            
+            $isNewUser = false;
         }
 
         Auth::login($user, remember: true);
 
-        // Redirect based on role
-        return redirect($user->role === 'admin' ? route('admin.dashboard') : route('dashboard'));
+        // Redirect based on role with success message
+        $message = $isNewUser 
+            ? 'Account created successfully! Welcome, ' . $user->name . '!'
+            : 'Welcome back, ' . $user->name . '!';
+            
+        return redirect($user->role === 'admin' ? route('admin.dashboard') : route('dashboard'))
+            ->with('success', $message);
     }
 }

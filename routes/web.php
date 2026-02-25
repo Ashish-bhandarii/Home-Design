@@ -197,9 +197,8 @@ Route::middleware(['auth', 'verified', 'designer'])->prefix('designer')->group(f
 
 // Admin routes - separate group without redirect.admin middleware
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->group(function () {
-    Route::get('/', function () {
-        return Inertia::render('admin/dashboard');
-    })->name('admin.dashboard');
+    Route::get('/', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])
+        ->name('admin.dashboard');
 
     Route::get('/analytics', [\App\Http\Controllers\Admin\AnalyticsController::class, 'index'])
         ->name('admin.analytics');

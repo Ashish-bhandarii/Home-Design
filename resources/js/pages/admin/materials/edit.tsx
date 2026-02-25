@@ -13,6 +13,7 @@ interface Material {
     price_per_unit: number;
     unit: string;
     image: string | null;
+    imageUrl?: string | null;
     color: string | null;
     brand: string | null;
     specifications: string | null;
@@ -30,9 +31,7 @@ interface Props {
 
 export default function MaterialEdit({ material, categories, types, units }: Props) {
     const [imagePreview, setImagePreview] = useState<string | null>(
-        material.image 
-            ? (material.image.startsWith('http') ? material.image : `/storage/${material.image}`)
-            : null
+        material.imageUrl ?? (material.image ? (material.image.startsWith('http') ? material.image : `/storage/${material.image}`) : null)
     );
     const [availableTypes, setAvailableTypes] = useState<string[]>(types[material.category] || []);
 

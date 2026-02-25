@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" width="100" height="120">
+  <defs>
+    <linearGradient id="km-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8B0000"/>
+      <stop offset="100%" stop-color="#DC143C"/>
+    </linearGradient>
+    <linearGradient id="km-frame" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8B6914"/>
+      <stop offset="30%" stop-color="#DAA520"/>
+      <stop offset="70%" stop-color="#B8860B"/>
+      <stop offset="100%" stop-color="#8B6914"/>
+    </linearGradient>
+    <radialGradient id="km-glow" cx="0.5" cy="0.4" r="0.35">
+      <stop offset="0%" stop-color="#FFD700" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#8B0000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Shadow -->
+  <rect x="4" y="4" width="96" height="116" rx="2" fill="rgba(0,0,0,0.3)"/>
+  <!-- Outer ornate frame -->
+  <rect x="0" y="0" width="96" height="116" rx="3" fill="url(#km-frame)" stroke="#6B4226" stroke-width="1.5"/>
+  <!-- Frame ornament top center -->
+  <path d="M40,2 Q48,-2 56,2" fill="none" stroke="#FFD700" stroke-width="1.2"/>
+  <circle cx="48" cy="0" r="2.5" fill="#FFD700"/>
+  <!-- Frame ornament corners -->
+  <circle cx="6" cy="6" r="2" fill="#B8860B"/>
+  <circle cx="90" cy="6" r="2" fill="#B8860B"/>
+  <circle cx="6" cy="110" r="2" fill="#B8860B"/>
+  <circle cx="90" cy="110" r="2" fill="#B8860B"/>
+  <!-- Inner frame -->
+  <rect x="7" y="7" width="82" height="102" rx="2" fill="#6B0000" stroke="#DAA520" stroke-width="1"/>
+  <!-- Canvas -->
+  <rect x="11" y="11" width="74" height="94" fill="url(#km-bg)"/>
+  <!-- Golden glow behind head -->
+  <circle cx="48" cy="45" r="28" fill="url(#km-glow)"/>
+  <!-- Kumari portrait - face -->
+  <ellipse cx="48" cy="48" rx="14" ry="17" fill="#DEB887"/>
+  <!-- Hair -->
+  <path d="M34,42 Q32,30 40,25 Q48,20 56,25 Q64,30 62,42" fill="#1A1A1A"/>
+  <path d="M34,42 Q33,48 34,52" fill="none" stroke="#1A1A1A" stroke-width="3"/>
+  <path d="M62,42 Q63,48 62,52" fill="none" stroke="#1A1A1A" stroke-width="3"/>
+  <!-- Crown/headdress -->
+  <path d="M36,30 L40,18 L44,24 L48,14 L52,24 L56,18 L60,30" fill="#FFD700" stroke="#B8860B" stroke-width="0.5"/>
+  <circle cx="48" cy="16" r="2" fill="#FF0000"/>
+  <circle cx="40" cy="20" r="1.5" fill="#FF0000"/>
+  <circle cx="56" cy="20" r="1.5" fill="#FF0000"/>
+  <!-- Third eye (agni chakchuu) -->
+  <ellipse cx="48" cy="36" rx="3" ry="1.5" fill="#FF0000" stroke="#8B0000" stroke-width="0.3"/>
+  <circle cx="48" cy="36" r="0.8" fill="#8B0000"/>
+  <!-- Eyes with heavy kohl -->
+  <ellipse cx="42" cy="44" rx="3.5" ry="2" fill="white"/>
+  <circle cx="42" cy="44" r="1.5" fill="#1A1A1A"/>
+  <path d="M38,43 Q42,41 46,43" fill="none" stroke="#1A1A1A" stroke-width="1"/>
+  <path d="M38,45 Q42,47 46,45" fill="none" stroke="#1A1A1A" stroke-width="0.5"/>
+  <ellipse cx="54" cy="44" rx="3.5" ry="2" fill="white"/>
+  <circle cx="54" cy="44" r="1.5" fill="#1A1A1A"/>
+  <path d="M50,43 Q54,41 58,43" fill="none" stroke="#1A1A1A" stroke-width="1"/>
+  <path d="M50,45 Q54,47 58,45" fill="none" stroke="#1A1A1A" stroke-width="0.5"/>
+  <!-- Kohl extensions -->
+  <line x1="38" y1="44" x2="35" y2="42" stroke="#1A1A1A" stroke-width="0.8"/>
+  <line x1="58" y1="44" x2="61" y2="42" stroke="#1A1A1A" stroke-width="0.8"/>
+  <!-- Nose -->
+  <path d="M48,46 L46,51 L48,52 L50,51" fill="none" stroke="#C4956A" stroke-width="0.6"/>
+  <!-- Small red lips -->
+  <path d="M44,56 Q48,59 52,56" fill="#FF0000" stroke="#8B0000" stroke-width="0.3"/>
+  <!-- Tika on forehead -->
+  <circle cx="48" cy="38" r="1.5" fill="#FF0000"/>
+  <!-- Necklace -->
+  <path d="M36,62 Q42,68 48,70 Q54,68 60,62" fill="none" stroke="#FFD700" stroke-width="1.5"/>
+  <circle cx="42" cy="66" r="1.5" fill="#FF0000"/>
+  <circle cx="48" cy="69" r="2" fill="#FFD700"/>
+  <circle cx="54" cy="66" r="1.5" fill="#FF0000"/>
+  <!-- Clothing (red) -->
+  <path d="M34,60 Q34,80 36,95 L60,95 Q62,80 62,60" fill="#DC143C" stroke="#8B0000" stroke-width="0.5"/>
+  <!-- Gold trim on clothing -->
+  <line x1="36" y1="75" x2="60" y2="75" stroke="#FFD700" stroke-width="0.8"/>
+  <line x1="36" y1="85" x2="60" y2="85" stroke="#FFD700" stroke-width="0.8"/>
+  <!-- Decorative border -->
+  <rect x="11" y="11" width="74" height="94" fill="none" stroke="#FFD700" stroke-width="0.6" stroke-dasharray="2,2"/>
+</svg>

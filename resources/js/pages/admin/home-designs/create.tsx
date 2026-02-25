@@ -539,17 +539,31 @@ export default function HomeDesignsCreate({
               {errors.cover_image && <p className="mt-1 text-xs text-red-600">{errors.cover_image}</p>}
             </div>
             <div className="md:col-span-2 lg:col-span-3">
-              <label className="mb-1.5 block text-sm font-medium">Gallery Images</label>
+              <label className="mb-1.5 block text-sm font-medium">Gallery Images (Max 5MB each)</label>
               <input
                 multiple
                 type="file"
                 accept="image/*"
-                onChange={(e) => setData('gallery_images', e.target.files ? Array.from(e.target.files) : [])}
+                onChange={(e) => {
+                  if (e.target.files) {
+                    const files = Array.from(e.target.files);
+                    const validFiles = files.filter(file => {
+                       if (file.size > 5 * 1024 * 1024) {
+                         alert(`Image ${file.name} exceeds 5MB limit.`);
+                         return false;
+                       }
+                       return true;
+                    });
+                    setData('gallery_images', validFiles);
+                  } else {
+                    setData('gallery_images', []);
+                  }
+                }}
                 className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-indigo-600 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-indigo-700 dark:border-slate-600 dark:bg-slate-700"
               />
             </div>
             <div className="md:col-span-2 lg:col-span-3">
-              <label className="mb-1.5 block text-sm font-medium">Design Files (2D / 3D / CAD / PDF / Video)</label>
+              <label className="mb-1.5 block text-sm font-medium">Design Files (Max 50MB) - 2D / 3D / CAD / PDF / Video</label>
               <div className="space-y-4">
                 {data.design_files_types.map((type: string, i: number) => (
                   <div key={i} className="rounded-xl border border-slate-200 p-4 dark:border-slate-600">
@@ -588,8 +602,14 @@ export default function HomeDesignsCreate({
                         <input
                           type="file"
                           onChange={(e) => {
+                            const file = e.target.files ? e.target.files[0] : undefined;
+                            if (file && file.size > 50 * 1024 * 1024) {
+                                alert(`File ${file.name} exceeds 50MB limit.`);
+                                e.target.value = '';
+                                return;
+                            }
                             const arr = [...data.design_files];
-                            arr[i] = e.target.files ? e.target.files[0] : undefined;
+                            arr[i] = file;
                             setData('design_files', arr);
                           }}
                           className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs file:mr-2 file:rounded-md file:border-0 file:bg-indigo-600 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-indigo-700 dark:border-slate-600 dark:bg-slate-700"

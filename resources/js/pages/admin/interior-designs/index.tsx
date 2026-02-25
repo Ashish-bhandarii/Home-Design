@@ -11,6 +11,7 @@ interface InteriorDesign {
   style: string | null;
   area_sqft: string | null;
   cover_image: string | null;
+  cover_image_url?: string | null;
   is_featured: boolean;
   is_active: boolean;
   views: number;
@@ -167,7 +168,7 @@ export default function InteriorDesignsIndex({ designs, filters, roomTypeOptions
               <div key={design.id} className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all hover:shadow-lg dark:border-slate-700 dark:bg-slate-800">
                 <div className="relative aspect-[4/3] overflow-hidden bg-slate-100 dark:bg-slate-700">
                   {design.cover_image ? (
-                    <img src={`/storage/${design.cover_image}`} alt={design.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+                    <img src={design.cover_image_url ?? (design.cover_image.startsWith('http') ? design.cover_image : `/storage/${design.cover_image}`)} alt={design.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
                   ) : (
                     <div className="flex h-full items-center justify-center">
                       <Palette className="h-12 w-12 text-slate-300 dark:text-slate-600" />

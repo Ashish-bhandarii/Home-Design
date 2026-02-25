@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 100" width="180" height="100">
+  <defs>
+    <linearGradient id="an-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1E3A5F"/>
+      <stop offset="50%" stop-color="#5B9BD5"/>
+      <stop offset="100%" stop-color="#ADD8E6"/>
+    </linearGradient>
+    <linearGradient id="an-wood" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6B4226"/>
+      <stop offset="50%" stop-color="#5D3A1A"/>
+      <stop offset="100%" stop-color="#4A2E14"/>
+    </linearGradient>
+    <linearGradient id="an-peak" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="50%" stop-color="#E8EEF4"/>
+      <stop offset="100%" stop-color="#9AAFCC"/>
+    </linearGradient>
+  </defs>
+  <!-- Shadow -->
+  <rect x="4" y="4" width="176" height="96" rx="2" fill="rgba(0,0,0,0.3)"/>
+  <!-- Outer frame -->
+  <rect x="0" y="0" width="176" height="96" rx="2" fill="url(#an-wood)" stroke="#3E2610" stroke-width="1.5"/>
+  <!-- Inner frame -->
+  <rect x="6" y="6" width="164" height="84" rx="1" fill="#4A2E14" stroke="#7B5B3A" stroke-width="1"/>
+  <!-- Canvas -->
+  <rect x="10" y="10" width="156" height="76" fill="url(#an-sky)"/>
+  <!-- Clouds -->
+  <ellipse cx="30" cy="30" rx="12" ry="3" fill="white" opacity="0.15"/>
+  <ellipse cx="140" cy="25" rx="15" ry="3.5" fill="white" opacity="0.12"/>
+  <!-- Background range -->
+  <polygon points="10,60 20,48 40,55 55,42 70,50 85,38 100,45 115,35 130,42 145,38 160,45 166,50 166,86 10,86" fill="#7B96B5" opacity="0.4"/>
+  <!-- Annapurna range - panoramic wide peaks -->
+  <!-- Peak 1 - leftmost -->
+  <polygon points="10,60 28,28 46,60" fill="url(#an-peak)" opacity="0.85"/>
+  <polygon points="24,35 28,28 32,35" fill="#FFFFFF"/>
+  <!-- Peak 2 -->
+  <polygon points="30,60 52,22 74,60" fill="url(#an-peak)" opacity="0.9"/>
+  <polygon points="47,30 52,22 57,30" fill="#FFFFFF"/>
+  <!-- Peak 3 - Annapurna I main -->
+  <polygon points="58,60 88,14 118,60" fill="url(#an-peak)"/>
+  <polygon points="82,22 88,14 94,22" fill="#FFFFFF"/>
+  <line x1="88" y1="14" x2="80" y2="40" stroke="#C8D4E0" stroke-width="0.5" opacity="0.5"/>
+  <line x1="88" y1="14" x2="96" y2="42" stroke="#C8D4E0" stroke-width="0.5" opacity="0.5"/>
+  <!-- Peak 4 -->
+  <polygon points="100,60 125,24 150,60" fill="url(#an-peak)" opacity="0.9"/>
+  <polygon points="120,32 125,24 130,32" fill="#FFFFFF"/>
+  <!-- Peak 5 - rightmost -->
+  <polygon points="132,60 155,30 166,60" fill="url(#an-peak)" opacity="0.85"/>
+  <polygon points="150,37 155,30 158,37" fill="#FFFFFF"/>
+  <!-- Snow plume -->
+  <path d="M88,14 Q100,10 115,16" fill="none" stroke="white" stroke-width="0.8" opacity="0.4"/>
+  <!-- Foreground ridge -->
+  <polygon points="10,68 30,62 55,66 80,60 105,64 130,58 155,63 166,60 166,86 10,86" fill="#4A6B8A" opacity="0.5"/>
+  <!-- Foreground -->
+  <rect x="10" y="75" width="156" height="11" fill="#3B5E3B" opacity="0.5"/>
+  <!-- Small trees in foreground -->
+  <polygon points="25,75 27,68 29,75" fill="#2E5A2E" opacity="0.6"/>
+  <polygon points="50,75 52,69 54,75" fill="#2E5A2E" opacity="0.6"/>
+  <polygon points="80,75 82,70 84,75" fill="#2E5A2E" opacity="0.5"/>
+  <polygon points="120,75 122,69 124,75" fill="#2E5A2E" opacity="0.6"/>
+  <polygon points="145,75 147,70 149,75" fill="#2E5A2E" opacity="0.5"/>
+</svg>

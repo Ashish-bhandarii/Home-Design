@@ -40,6 +40,9 @@ class FurnitureController extends Controller
                     'room' => $item->room,
                     'price' => $item->price,
                     'image' => $item->image,
+                    'imageUrl' => $item->image
+                        ? (str_starts_with($item->image, 'http') ? $item->image : url(Storage::url($item->image)))
+                        : null,
                     'dimensions' => $item->dimensions,
                     'material' => $item->material,
                     'color' => $item->color,
@@ -76,10 +79,14 @@ class FurnitureController extends Controller
             'material' => 'nullable|string',
             'color' => 'nullable|string',
             'stock' => 'nullable|integer|min:0',
-            'is_active' => 'boolean',
-            'is_featured' => 'boolean',
+            'availability' => 'nullable|string',
+            'is_active' => 'sometimes|boolean',
+            'is_featured' => 'sometimes|boolean',
         ]);
 
+        // Set defaults for booleans if not provided
+        $validated['is_active'] = $request->boolean('is_active');
+        $validated['is_featured'] = $request->boolean('is_featured');
         $validated['slug'] = Str::slug($validated['name']);
 
         if ($request->hasFile('image')) {
@@ -103,6 +110,9 @@ class FurnitureController extends Controller
                 'room' => $furniture->room,
                 'price' => $furniture->price,
                 'image' => $furniture->image,
+                'imageUrl' => $furniture->image
+                    ? (str_starts_with($furniture->image, 'http') ? $furniture->image : url(Storage::url($furniture->image)))
+                    : null,
                 'dimensions' => $furniture->dimensions,
                 'material' => $furniture->material,
                 'color' => $furniture->color,
@@ -128,9 +138,14 @@ class FurnitureController extends Controller
             'material' => 'nullable|string',
             'color' => 'nullable|string',
             'stock' => 'nullable|integer|min:0',
-            'is_active' => 'boolean',
-            'is_featured' => 'boolean',
+            'availability' => 'nullable|string',
+            'is_active' => 'sometimes|boolean',
+            'is_featured' => 'sometimes|boolean',
         ]);
+
+        // Set booleans properly
+        $validated['is_active'] = $request->boolean('is_active');
+        $validated['is_featured'] = $request->boolean('is_featured');
 
         if ($request->hasFile('image')) {
             // Delete old image only if it's a local file, not an external URL

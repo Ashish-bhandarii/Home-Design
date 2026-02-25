@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 120" width="90" height="120">
+  <defs>
+    <linearGradient id="nw-frame" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#5C1A1A"/>
+      <stop offset="50%" stop-color="#8B2020"/>
+      <stop offset="100%" stop-color="#5C1A1A"/>
+    </linearGradient>
+    <linearGradient id="nw-wood" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5D3A1A"/>
+      <stop offset="100%" stop-color="#3E2610"/>
+    </linearGradient>
+  </defs>
+  <!-- Shadow -->
+  <rect x="4" y="4" width="86" height="116" rx="2" fill="rgba(0,0,0,0.3)"/>
+  <!-- Outer frame - dark red -->
+  <rect x="0" y="0" width="86" height="116" rx="2" fill="url(#nw-frame)" stroke="#3E1010" stroke-width="1.5"/>
+  <!-- Inner frame -->
+  <rect x="6" y="6" width="74" height="104" rx="1" fill="#3E1010" stroke="#8B4040" stroke-width="1"/>
+  <!-- Canvas - dark background -->
+  <rect x="10" y="10" width="66" height="96" fill="#2C1A0E"/>
+  <!-- Brick wall background -->
+  <rect x="10" y="10" width="66" height="96" fill="#8B4513" opacity="0.4"/>
+  <!-- Brick pattern -->
+  <line x1="10" y1="18" x2="76" y2="18" stroke="#6B3410" stroke-width="0.3" opacity="0.4"/>
+  <line x1="10" y1="26" x2="76" y2="26" stroke="#6B3410" stroke-width="0.3" opacity="0.4"/>
+  <line x1="10" y1="34" x2="76" y2="34" stroke="#6B3410" stroke-width="0.3" opacity="0.4"/>
+  <line x1="10" y1="90" x2="76" y2="90" stroke="#6B3410" stroke-width="0.3" opacity="0.4"/>
+  <line x1="10" y1="98" x2="76" y2="98" stroke="#6B3410" stroke-width="0.3" opacity="0.4"/>
+  <!-- Window frame outer -->
+  <rect x="16" y="22" width="54" height="72" rx="2" fill="url(#nw-wood)" stroke="#2C1A0E" stroke-width="1.5"/>
+  <!-- Window frame inner border -->
+  <rect x="19" y="25" width="48" height="66" rx="1" fill="#2C1A0E" stroke="#5D3A1A" stroke-width="0.8"/>
+  <!-- Lattice window opening -->
+  <rect x="22" y="28" width="42" height="60" fill="#1A0E06"/>
+  <!-- Lattice pattern - vertical bars -->
+  <line x1="29" y1="28" x2="29" y2="88" stroke="#5D3A1A" stroke-width="1.2"/>
+  <line x1="36" y1="28" x2="36" y2="88" stroke="#5D3A1A" stroke-width="1.2"/>
+  <line x1="43" y1="28" x2="43" y2="88" stroke="#5D3A1A" stroke-width="1.2"/>
+  <line x1="50" y1="28" x2="50" y2="88" stroke="#5D3A1A" stroke-width="1.2"/>
+  <line x1="57" y1="28" x2="57" y2="88" stroke="#5D3A1A" stroke-width="1.2"/>
+  <!-- Lattice pattern - horizontal bars -->
+  <line x1="22" y1="35" x2="64" y2="35" stroke="#5D3A1A" stroke-width="1.2"/>
+  <line x1="22" y1="43" x2="64" y2="43" stroke="#5D3A1A" stroke-width="1.2"/>
+  <line x1="22" y1="51" x2="64" y2="51" stroke="#5D3A1A" stroke-width="1.2"/>
+  <line x1="22" y1="59" x2="64" y2="59" stroke="#5D3A1A" stroke-width="1.2"/>
+  <line x1="22" y1="67" x2="64" y2="67" stroke="#5D3A1A" stroke-width="1.2"/>
+  <line x1="22" y1="75" x2="64" y2="75" stroke="#5D3A1A" stroke-width="1.2"/>
+  <line x1="22" y1="83" x2="64" y2="83" stroke="#5D3A1A" stroke-width="1.2"/>
+  <!-- Diamond lattice overlay -->
+  <line x1="22" y1="28" x2="43" y2="58" stroke="#4A2E14" stroke-width="0.6" opacity="0.6"/>
+  <line x1="43" y1="28" x2="64" y2="58" stroke="#4A2E14" stroke-width="0.6" opacity="0.6"/>
+  <line x1="22" y1="58" x2="43" y2="88" stroke="#4A2E14" stroke-width="0.6" opacity="0.6"/>
+  <line x1="43" y1="58" x2="64" y2="88" stroke="#4A2E14" stroke-width="0.6" opacity="0.6"/>
+  <line x1="43" y1="28" x2="22" y2="58" stroke="#4A2E14" stroke-width="0.6" opacity="0.6"/>
+  <line x1="64" y1="28" x2="43" y2="58" stroke="#4A2E14" stroke-width="0.6" opacity="0.6"/>
+  <line x1="43" y1="58" x2="22" y2="88" stroke="#4A2E14" stroke-width="0.6" opacity="0.6"/>
+  <line x1="64" y1="58" x2="43" y2="88" stroke="#4A2E14" stroke-width="0.6" opacity="0.6"/>
+  <!-- Carved top arch -->
+  <path d="M16,22 Q43,12 70,22" fill="url(#nw-wood)" stroke="#2C1A0E" stroke-width="1"/>
+  <!-- Carved detail on arch -->
+  <path d="M22,20 Q43,13 64,20" fill="none" stroke="#8B6914" stroke-width="0.5"/>
+  <!-- Small carved flower at top center -->
+  <circle cx="43" cy="17" r="3" fill="#5D3A1A" stroke="#8B6914" stroke-width="0.5"/>
+  <circle cx="43" cy="17" r="1.5" fill="#8B6914"/>
+  <!-- Bottom sill -->
+  <rect x="14" y="92" width="58" height="4" fill="#5D3A1A" stroke="#2C1A0E" stroke-width="0.5"/>
+  <!-- Side carved struts -->
+  <path d="M16,30 Q12,35 16,40" fill="none" stroke="#5D3A1A" stroke-width="1.5"/>
+  <path d="M70,30 Q74,35 70,40" fill="none" stroke="#5D3A1A" stroke-width="1.5"/>
+</svg>

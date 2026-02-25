@@ -25,6 +25,7 @@ interface HomeDesign {
     bedrooms: number;
     bathrooms: number;
     cover_image: string | null;
+    cover_image_url?: string | null;
     is_featured: boolean;
     is_active: boolean;
     views: number;
@@ -246,7 +247,7 @@ export default function HomeDesignsIndex({ designs, filters, styleOptions }: Pro
                                 <div className="relative aspect-[4/3] overflow-hidden bg-slate-100 dark:bg-slate-700">
                                     {design.cover_image ? (
                                         <img
-                                            src={`/storage/${design.cover_image}`}
+                                            src={design.cover_image_url ?? (design.cover_image.startsWith('http') ? design.cover_image : `/storage/${design.cover_image}`)}
                                             alt={design.name}
                                             className="h-full w-full object-cover transition-transform group-hover:scale-105"
                                         />

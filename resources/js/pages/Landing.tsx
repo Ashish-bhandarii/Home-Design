@@ -497,13 +497,6 @@ export default function Landing({ featuredHomeDesigns = [], featuredInteriorDesi
                                             <Plus className="h-5 w-5" />
                                             Get Started Free
                                         </Link>
-                                        <button
-                                            onClick={handleLockedFeature}
-                                            className="flex items-center gap-2 rounded-xl border border-zinc-300 bg-white px-5 py-3 font-medium text-zinc-700 transition-all hover:border-orange-300 hover:bg-orange-50"
-                                        >
-                                            <Lock className="h-5 w-5" />
-                                            Sign In to Access
-                                        </button>
                                     </>
                                 )}
                             </div>
@@ -1005,12 +998,6 @@ export default function Landing({ featuredHomeDesigns = [], featuredInteriorDesi
                                 >
                                     Get Started Free
                                 </Link>
-                                <Link
-                                    href="/login"
-                                    className="rounded-xl border-2 border-white/30 bg-white/10 px-8 py-3 font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/20"
-                                >
-                                    Sign In
-                                </Link>
                             </div>
                         </div>
                     )}
@@ -1207,12 +1194,6 @@ export default function Landing({ featuredHomeDesigns = [], featuredInteriorDesi
                                 className="block w-full rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 py-3 text-center font-semibold text-white shadow-lg transition-all hover:scale-105"
                             >
                                 Create Free Account
-                            </Link>
-                            <Link
-                                href="/login"
-                                className="block w-full rounded-xl border border-zinc-300 py-3 text-center font-medium text-zinc-700 transition-all hover:bg-zinc-50"
-                            >
-                                Sign In
                             </Link>
                             <button
                                 onClick={() => setShowLoginPrompt(false)}

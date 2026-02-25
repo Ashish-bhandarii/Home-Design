@@ -12,6 +12,7 @@ interface Furniture {
     room: string;
     price: number;
     image: string | null;
+    imageUrl?: string | null;
     dimensions: { width: string; height: string; depth: string } | null;
     material: string | null;
     color: string | null;
@@ -29,9 +30,7 @@ interface Props {
 
 export default function FurnitureEdit({ furniture, categories, rooms }: Props) {
     const [imagePreview, setImagePreview] = useState<string | null>(
-        furniture.image 
-            ? (furniture.image.startsWith('http') ? furniture.image : `/storage/${furniture.image}`)
-            : null
+        furniture.imageUrl ?? (furniture.image ? (furniture.image.startsWith('http') ? furniture.image : `/storage/${furniture.image}`) : null)
     );
 
     const { data, setData, post, processing, errors } = useForm({

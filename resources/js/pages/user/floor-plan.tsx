@@ -2,7 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { OrbitControls, PerspectiveCamera, Text } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import axios from 'axios';
-import { BedDouble, Box, Building2, Check, ChevronDown, ChevronLeft, ChevronRight, Copy, Download, FolderOpen, Grid2X2, Home, Pencil, RefreshCw, Save, Sofa, Sparkles, Trash2, X } from 'lucide-react';
+import { BedDouble, Box, Building2, Check, ChevronDown, ChevronLeft, ChevronRight, Copy, Download, FolderOpen, Grid2X2, Home, Pencil, RefreshCw, Save, Sofa, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
@@ -164,6 +164,8 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
     const wall = 0.15;
     const rooms: Room[] = [];
 
+    const layoutOriginX = 0;
+    const layoutOriginY = 0;
     const innerW = plotWidth - wall * 2;
     const innerH = plotDepth - wall * 2;
 
@@ -179,6 +181,113 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
     
     // Door width constant for proper placement (standard single door ~80cm)
     const doorWidth = 0.8;
+    
+    // Helper function to create doors respecting the numDoors limit (max 2)
+    const createRoomDoors = (
+        numDoorsConfig: number,
+        roomX: number,
+        roomY: number,
+        roomW: number,
+        roomH: number,
+        primaryWall: 'top' | 'bottom' | 'left' | 'right',
+        roomIndex: number = 0
+    ): { x: number; y: number; direction: 'left' | 'right' | 'up' | 'down'; swing: 'cw' | 'ccw' }[] => {
+        const doors: { x: number; y: number; direction: 'left' | 'right' | 'up' | 'down'; swing: 'cw' | 'ccw' }[] = [];
+        // Strictly limit to max 2 doors
+        const numDoorsToPlace = Math.min(Math.max(numDoorsConfig || 1, 1), 2);
+        
+        // Calculate door positions based on wall
+        const doorOffset = 0.3; // Minimum offset from corners
+        
+        if (primaryWall === 'bottom') {
+            // Door on bottom wall (opens down into corridor)
+            const firstDoorX = roomIndex % 2 === 0 
+                ? roomX + Math.max(doorOffset, roomW * 0.2)
+                : roomX + roomW - Math.max(doorOffset, roomW * 0.2) - doorWidth;
+            doors.push({ 
+                x: firstDoorX, 
+                y: roomY + roomH, 
+                direction: 'down', 
+                swing: roomIndex % 2 === 0 ? 'cw' : 'ccw' 
+            });
+            
+            // Second door only if explicitly requested (max 2)
+            if (numDoorsToPlace === 2 && roomW >= doorWidth * 3) {
+                const secondDoorX = roomIndex % 2 === 0 
+                    ? roomX + roomW - Math.max(doorOffset, roomW * 0.2) - doorWidth
+                    : roomX + Math.max(doorOffset, roomW * 0.2);
+                doors.push({ 
+                    x: secondDoorX, 
+                    y: roomY + roomH, 
+                    direction: 'down', 
+                    swing: roomIndex % 2 === 0 ? 'ccw' : 'cw' 
+                });
+            }
+        } else if (primaryWall === 'top') {
+            const firstDoorX = roomX + (roomW - doorWidth) / 2;
+            doors.push({ x: firstDoorX, y: roomY, direction: 'up', swing: roomIndex % 2 === 0 ? 'cw' : 'ccw' });
+            
+            if (numDoorsToPlace === 2 && roomW >= doorWidth * 3) {
+                const secondDoorX = roomIndex % 2 === 0 
+                    ? roomX + roomW - doorOffset - doorWidth
+                    : roomX + doorOffset;
+                doors.push({ x: secondDoorX, y: roomY, direction: 'up', swing: roomIndex % 2 === 0 ? 'ccw' : 'cw' });
+            }
+        } else if (primaryWall === 'left') {
+            const firstDoorY = roomY + Math.max(doorOffset, roomH * 0.25);
+            doors.push({ x: roomX, y: firstDoorY, direction: 'left', swing: roomIndex % 2 === 0 ? 'cw' : 'ccw' });
+            
+            if (numDoorsToPlace === 2 && roomH >= doorWidth * 3) {
+                const secondDoorY = roomY + roomH - doorOffset - doorWidth;
+                doors.push({ x: roomX, y: secondDoorY, direction: 'left', swing: roomIndex % 2 === 0 ? 'ccw' : 'cw' });
+            }
+        } else if (primaryWall === 'right') {
+            const firstDoorY = roomY + Math.max(doorOffset, roomH * 0.25);
+            doors.push({ x: roomX + roomW, y: firstDoorY, direction: 'right', swing: roomIndex % 2 === 0 ? 'cw' : 'ccw' });
+            
+            if (numDoorsToPlace === 2 && roomH >= doorWidth * 3) {
+                const secondDoorY = roomY + roomH - doorOffset - doorWidth;
+                doors.push({ x: roomX + roomW, y: secondDoorY, direction: 'right', swing: roomIndex % 2 === 0 ? 'ccw' : 'cw' });
+            }
+        }
+        
+        return doors;
+    };
+    
+    // Helper function to create ensuite door that ONLY connects to parent bedroom
+    const createEnsuiteDoor = (
+        ensuiteX: number,
+        ensuiteY: number,
+        ensuiteW: number,
+        ensuiteH: number,
+        bedroomX: number,
+        bedroomY: number,
+        bedroomW: number,
+        bedroomH: number
+    ): { x: number; y: number; direction: 'left' | 'right' | 'up' | 'down'; swing: 'cw' | 'ccw' }[] => {
+        // Determine which wall of the ensuite is shared with the bedroom
+        // The door should ONLY be on this shared wall
+        const doorY = ensuiteY + (ensuiteH - doorWidth) / 2;
+        
+        // Check if ensuite is to the right of bedroom
+        if (Math.abs(ensuiteX - (bedroomX + bedroomW)) < 0.5) {
+            // Ensuite is on the right side of bedroom - door opens left into bedroom
+            return [{ x: ensuiteX, y: doorY, direction: 'left', swing: 'ccw' }];
+        }
+        // Check if ensuite is to the left of bedroom
+        if (Math.abs((ensuiteX + ensuiteW) - bedroomX) < 0.5) {
+            // Ensuite is on the left side of bedroom - door opens right into bedroom
+            return [{ x: ensuiteX + ensuiteW, y: doorY, direction: 'right', swing: 'cw' }];
+        }
+        // Check if ensuite is below bedroom
+        if (Math.abs(ensuiteY - (bedroomY + bedroomH)) < 0.5) {
+            const doorX = ensuiteX + (ensuiteW - doorWidth) / 2;
+            return [{ x: doorX, y: ensuiteY, direction: 'up', swing: 'ccw' }];
+        }
+        // Ensuite is above bedroom
+        const doorX = ensuiteX + (ensuiteW - doorWidth) / 2;
+        return [{ x: doorX, y: ensuiteY + ensuiteH, direction: 'down', swing: 'cw' }];
+    };
     
     // Calculate zones based on variant
     // Private zone (bedrooms + bathrooms) vs Public zone (living, kitchen, etc.)
@@ -203,7 +312,8 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
         // ========== LINEAR LAYOUT ==========
         // Private zone at top, corridor in middle, public zone at bottom
         
-        // Calculate bedroom dimensions
+        // Calculate bedroom dimensions - distribute bathrooms to avoid clustering
+        // If multiple bathrooms, place them at different ends/areas
         const bedroomAreaW = numBathrooms > 0 ? innerW * 0.75 : innerW;
         const bathroomAreaW = innerW - bedroomAreaW;
         
@@ -216,18 +326,12 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                 const ensuiteW = hasEnsuite ? bedW * 0.30 : 0;
                 const actualBedW = bedW - ensuiteW - roomPadding;
                 
-                const x = wall + idx * bedW + roomPadding / 2;
-                const y = wall + roomPadding / 2;
+                const x = layoutOriginX + wall + idx * bedW + roomPadding / 2;
+                const y = layoutOriginY + wall + roomPadding / 2;
                 const h = privateZoneH - roomPadding;
                 
-                // Door position: facing corridor (bottom wall of bedroom)
-                // Place door 20% from left edge, ensuring it doesn't overlap corners
-                // Door x is the hinge position
-                const doorOffset = Math.max(0.3, actualBedW * 0.2);
-                const doorX = idx % 2 === 0 
-                    ? x + doorOffset  // Left side placement for even rooms
-                    : x + actualBedW - doorOffset - doorWidth; // Right side for odd rooms
-                const doorY = y + h;
+                // Create doors using helper - respects numDoors limit (max 2)
+                const bedroomDoors = createRoomDoors(bed.numDoors || 1, x, y, actualBedW, h, 'bottom', idx);
                 
                 rooms.push({
                     id: bed.id,
@@ -237,43 +341,81 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                     y,
                     w: actualBedW,
                     h,
-                    doors: [{ x: doorX, y: doorY, direction: 'down', swing: idx % 2 === 0 ? 'cw' : 'ccw' }],
+                    doors: bedroomDoors,
                     hasEnsuite,
                 });
 
-                // Add ensuite attached to bedroom
+                // Add ensuite attached to bedroom - door ONLY connects to parent bedroom
                 if (hasEnsuite) {
                     const ensuiteX = x + actualBedW;
                     const ensuiteY = y;
                     const ensuiteH = h * 0.6; // Ensuite smaller than full height
+                    const actualEnsuiteW = ensuiteW - roomPadding / 2;
                     
-                    // Ensuite door opens INTO bedroom (privacy)
+                    // Ensuite door ONLY opens into the parent bedroom
+                    const ensuiteDoors = createEnsuiteDoor(
+                        ensuiteX, ensuiteY, actualEnsuiteW, ensuiteH,
+                        x, y, actualBedW, h
+                    );
+                    
                     rooms.push({
                         id: `${bed.id}-ensuite`,
                         type: 'ensuite',
                         label: 'Ensuite',
                         x: ensuiteX,
                         y: ensuiteY,
-                        w: ensuiteW - roomPadding / 2,
+                        w: actualEnsuiteW,
                         h: ensuiteH,
-                        // Ensuite door centered vertically, opens into bedroom
-                        doors: [{ x: ensuiteX, y: ensuiteY + (ensuiteH - doorWidth) / 2, direction: 'left', swing: 'ccw' }],
+                        doors: ensuiteDoors,
                     });
                 }
             });
         }
 
-        // Place standalone bathrooms on the right side of private zone
+        // Place standalone bathrooms - DISTRIBUTE them to avoid public toilet appearance
+        // If multiple bathrooms, alternate positions to spread them out
         if (numBathrooms > 0) {
-            const bathH = (privateZoneH - roomPadding) / numBathrooms;
+            // For multiple bathrooms, distribute: one near bedrooms, others near common areas
+            const distributeToPublicZone = numBathrooms > 1;
             
             req.bathrooms.forEach((bath, idx) => {
-                const x = wall + bedroomAreaW + roomPadding / 2;
-                const y = wall + idx * bathH + roomPadding / 2;
-                const bathRoomH = bathH - roomPadding;
+                const bathW = bathroomAreaW - roomPadding;
+                let x: number, y: number, bathRoomH: number;
+                let doorDirection: 'left' | 'right' | 'up' | 'down';
+                let doorX: number, doorY: number;
                 
-                // Bathroom door faces corridor, centered on wall
-                const doorY = y + (bathRoomH - doorWidth) / 2;
+                if (!distributeToPublicZone || idx === 0) {
+                    // First bathroom in private zone (near bedrooms)
+                    bathRoomH = numBathrooms === 1 ? privateZoneH - roomPadding : (privateZoneH - roomPadding) * 0.8;
+                    x = layoutOriginX + wall + bedroomAreaW + roomPadding / 2;
+                    y = layoutOriginY + wall + roomPadding / 2;
+                    doorY = y + (bathRoomH - doorWidth) / 2;
+                    doorX = x;
+                    doorDirection = 'left';
+                } else {
+                    // Subsequent bathrooms distributed to public zone (separated from each other)
+                    // Place in the public zone near common areas
+                    const publicStartY = layoutOriginY + wall + privateZoneH + corridorW;
+                    const publicBathH = Math.min(publicZoneH * 0.5, 4); // Max 4m height for bathroom
+                    bathRoomH = publicBathH - roomPadding;
+                    
+                    // Position at right side of public zone for separation
+                    x = layoutOriginX + wall + innerW - bathW - roomPadding / 2;
+                    y = publicStartY + (idx - 1) * (publicBathH + roomPadding) + roomPadding / 2;
+                    
+                    // Ensure we don't overflow the public zone
+                    if (y + bathRoomH > layoutOriginY + wall + innerH) {
+                        y = publicStartY + roomPadding / 2;
+                    }
+                    
+                    doorY = y;
+                    doorX = x + (bathW - doorWidth) / 2;
+                    doorDirection = 'up';
+                }
+                
+                // Create bathroom doors respecting numDoors config (max 2)
+                const bathroomDoors = createRoomDoors(bath.numDoors || 1, x, y, bathW, bathRoomH, 
+                    doorDirection === 'left' ? 'left' : 'top', idx);
                 
                 rooms.push({
                     id: bath.id,
@@ -281,20 +423,20 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                     label: bath.name,
                     x,
                     y,
-                    w: bathroomAreaW - roomPadding,
+                    w: bathW,
                     h: bathRoomH,
-                    doors: [{ x: x, y: doorY, direction: 'left', swing: idx % 2 === 0 ? 'cw' : 'ccw' }],
+                    doors: bathroomDoors,
                 });
             });
         }
 
         // Add corridor/hallway indicator
-        const corridorY = wall + privateZoneH;
+        const corridorY = layoutOriginY + wall + privateZoneH;
         rooms.push({
             id: 'corridor',
             type: 'corridor',
             label: 'Hallway',
-            x: wall,
+            x: layoutOriginX + wall,
             y: corridorY,
             w: innerW,
             h: corridorW,
@@ -304,20 +446,19 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
         // Place common areas in public zone
         if (numCommon > 0) {
             const publicStartY = corridorY + corridorW;
-            const commonW = innerW / numCommon;
+            // Account for bathrooms that may be in the public zone
+            const bathroomsInPublicZone = numBathrooms > 1 ? numBathrooms - 1 : 0;
+            const availableW = bathroomsInPublicZone > 0 ? innerW * 0.75 : innerW;
+            const commonW = availableW / numCommon;
             
             req.commonAreas.forEach((room, idx) => {
-                const x = wall + idx * commonW + roomPadding / 2;
+                const x = layoutOriginX + wall + idx * commonW + roomPadding / 2;
                 const y = publicStartY + roomPadding / 2;
                 const w = commonW - roomPadding;
                 const h = publicZoneH - roomPadding;
                 
-                // Door from corridor into room - offset from center for variety
-                const doorOffset = idx % 2 === 0 
-                    ? w * 0.3  // Offset to left for even rooms
-                    : w * 0.7 - doorWidth; // Offset to right for odd rooms
-                const doorX = x + doorOffset;
-                const doorY = y;
+                // Create doors using helper - respects numDoors config (max 2)
+                const commonDoors = createRoomDoors(room.numDoors || 1, x, y, w, h, 'top', idx);
                 
                 rooms.push({
                     id: room.id,
@@ -327,14 +468,14 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                     y,
                     w,
                     h,
-                    doors: [{ x: doorX, y: doorY, direction: 'up', swing: idx % 2 === 0 ? 'cw' : 'ccw' }],
+                    doors: commonDoors,
                 });
             });
         }
 
     } else if (layoutType === 'L-shaped') {
         // ========== L-SHAPED LAYOUT ==========
-        // Bedrooms on left side, bathrooms at corner, living wrapping around
+        // Bedrooms on left side, bathrooms distributed, living wrapping around
         
         const bedroomZoneW = innerW * 0.40;
         const livingZoneW = innerW - bedroomZoneW - corridorW;
@@ -348,15 +489,12 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                 const ensuiteH = hasEnsuite ? bedH * 0.35 : 0;
                 const actualBedH = bedH - ensuiteH - roomPadding;
                 
-                const x = wall + roomPadding / 2;
-                const y = wall + idx * bedH + roomPadding / 2;
+                const x = layoutOriginX + wall + roomPadding / 2;
+                const y = layoutOriginY + wall + idx * bedH + roomPadding / 2;
                 const w = bedroomZoneW - corridorW - roomPadding;
                 
-                // Door facing corridor (on right side of bedroom)
-                // Position door properly along the wall
-                const doorOffset = Math.max(0.3, actualBedH * 0.25);
-                const doorX = x + w;
-                const doorY = y + doorOffset;
+                // Create doors using helper - respects numDoors config (max 2)
+                const bedroomDoors = createRoomDoors(bed.numDoors || 1, x, y, w, actualBedH, 'right', idx);
                 
                 rooms.push({
                     id: bed.id,
@@ -366,22 +504,32 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                     y,
                     w,
                     h: actualBedH,
-                    doors: [{ x: doorX, y: doorY, direction: 'right', swing: idx % 2 === 0 ? 'cw' : 'ccw' }],
+                    doors: bedroomDoors,
                     hasEnsuite,
                 });
 
-                // Ensuite below bedroom
+                // Ensuite below bedroom - door ONLY connects to parent bedroom
                 if (hasEnsuite) {
                     const ensuiteRealH = ensuiteH - roomPadding / 2;
+                    const ensuiteW = w * 0.6;
+                    const ensuiteX = x;
+                    const ensuiteY = y + actualBedH;
+                    
+                    // Ensuite door ONLY opens into parent bedroom (not corridor)
+                    const ensuiteDoors = createEnsuiteDoor(
+                        ensuiteX, ensuiteY, ensuiteW, ensuiteRealH,
+                        x, y, w, actualBedH
+                    );
+                    
                     rooms.push({
                         id: `${bed.id}-ensuite`,
                         type: 'ensuite',
                         label: 'Ensuite',
-                        x,
-                        y: y + actualBedH,
-                        w: w * 0.6,
+                        x: ensuiteX,
+                        y: ensuiteY,
+                        w: ensuiteW,
                         h: ensuiteRealH,
-                        doors: [{ x: x + w * 0.6, y: y + actualBedH + (ensuiteRealH - doorWidth) / 2, direction: 'right', swing: 'ccw' }],
+                        doors: ensuiteDoors,
                     });
                 }
             });
@@ -392,26 +540,36 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
             id: 'corridor',
             type: 'corridor',
             label: '',
-            x: wall + bedroomZoneW - corridorW,
-            y: wall,
+            x: layoutOriginX + wall + bedroomZoneW - corridorW,
+            y: layoutOriginY + wall,
             w: corridorW,
             h: innerH,
             doors: [],
         });
 
-        // Bathrooms at top right corner
+        // Bathrooms - DISTRIBUTE them to avoid public toilet appearance
         if (numBathrooms > 0) {
             const bathAreaH = innerH * 0.30;
-            const bathW = livingZoneW / numBathrooms;
             
             req.bathrooms.forEach((bath, idx) => {
-                const x = wall + bedroomZoneW + idx * bathW + roomPadding / 2;
-                const y = wall + roomPadding / 2;
-                const bathRoomW = bathW - roomPadding;
-                const bathRoomH = bathAreaH - roomPadding;
+                let x: number, y: number, bathRoomW: number, bathRoomH: number;
                 
-                // Door centered on left wall
-                const doorY = y + (bathRoomH - doorWidth) / 2;
+                if (idx === 0) {
+                    // First bathroom at top right
+                    x = layoutOriginX + wall + bedroomZoneW + roomPadding / 2;
+                    y = layoutOriginY + wall + roomPadding / 2;
+                    bathRoomW = livingZoneW * 0.5 - roomPadding;
+                    bathRoomH = bathAreaH - roomPadding;
+                } else {
+                    // Subsequent bathrooms distributed to different areas (bottom right)
+                    x = layoutOriginX + wall + bedroomZoneW + livingZoneW * 0.5 + roomPadding / 2;
+                    y = layoutOriginY + wall + innerH - bathAreaH + roomPadding / 2;
+                    bathRoomW = livingZoneW * 0.5 - roomPadding;
+                    bathRoomH = bathAreaH - roomPadding;
+                }
+                
+                // Create bathroom doors respecting numDoors config (max 2)
+                const bathroomDoors = createRoomDoors(bath.numDoors || 1, x, y, bathRoomW, bathRoomH, 'left', idx);
                 
                 rooms.push({
                     id: bath.id,
@@ -421,7 +579,7 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                     y,
                     w: bathRoomW,
                     h: bathRoomH,
-                    doors: [{ x: x, y: doorY, direction: 'left', swing: idx % 2 === 0 ? 'cw' : 'ccw' }],
+                    doors: bathroomDoors,
                 });
             });
         }
@@ -429,12 +587,19 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
         // Common areas in remaining L-shape
         if (numCommon > 0) {
             const bathAreaH = numBathrooms > 0 ? innerH * 0.30 : 0;
-            const commonStartY = wall + bathAreaH;
-            const commonH = (innerH - bathAreaH) / Math.max(numCommon, 1);
+            const commonStartY = layoutOriginY + wall + bathAreaH;
+            // Reserve space if there's a second bathroom at bottom
+            const bottomBathSpace = numBathrooms > 1 ? bathAreaH : 0;
+            const commonH = (innerH - bathAreaH - bottomBathSpace) / Math.max(numCommon, 1);
             
             req.commonAreas.forEach((room, idx) => {
-                const x = wall + bedroomZoneW + roomPadding / 2;
+                const x = layoutOriginX + wall + bedroomZoneW + roomPadding / 2;
                 const y = commonStartY + idx * commonH + roomPadding / 2;
+                const w = livingZoneW - roomPadding;
+                const h = commonH - roomPadding;
+                
+                // Create doors using helper - respects numDoors config (max 2)
+                const commonDoors = createRoomDoors(room.numDoors || 1, x, y, w, h, 'left', idx);
                 
                 rooms.push({
                     id: room.id,
@@ -442,9 +607,9 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                     label: room.name,
                     x,
                     y,
-                    w: livingZoneW - roomPadding,
-                    h: commonH - roomPadding,
-                    doors: [{ x: x, y: y + (commonH - roomPadding) * 0.4, direction: 'left', swing: idx % 2 === 0 ? 'cw' : 'ccw' }],
+                    w,
+                    h,
+                    doors: commonDoors,
                 });
             });
         }
@@ -463,13 +628,13 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
             const hasEnsuite = masterBed.hasEnsuite;
             const ensuiteH = hasEnsuite ? innerH * 0.35 : 0;
             
-            const x = wall + roomPadding / 2;
-            const y = wall + roomPadding / 2;
+            const x = layoutOriginX + wall + roomPadding / 2;
+            const y = layoutOriginY + wall + roomPadding / 2;
             const w = masterZoneW - corridorW - roomPadding;
             const h = innerH - ensuiteH - roomPadding;
             
-            // Door on right wall, offset from top
-            const doorOffset = Math.max(0.3, h * 0.25);
+            // Create doors using helper - respects numDoors config (max 2)
+            const masterDoors = createRoomDoors(masterBed.numDoors || 1, x, y, w, h, 'right', 0);
             
             rooms.push({
                 id: masterBed.id,
@@ -479,24 +644,31 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                 y,
                 w,
                 h,
-                doors: [{ x: x + w, y: y + doorOffset, direction: 'right', swing: 'cw' }],
+                doors: masterDoors,
                 hasEnsuite,
             });
 
             if (hasEnsuite) {
-                // Ensuite door centered on top wall
+                // Ensuite attached to master - door ONLY connects to parent bedroom
                 const ensuiteW = w * 0.7;
-                const ensuiteDoorX = x + (ensuiteW - doorWidth) / 2;
+                const ensuiteX = x;
+                const ensuiteY = y + h;
+                const actualEnsuiteH = ensuiteH - roomPadding / 2;
+                
+                const ensuiteDoors = createEnsuiteDoor(
+                    ensuiteX, ensuiteY, ensuiteW, actualEnsuiteH,
+                    x, y, w, h
+                );
                 
                 rooms.push({
                     id: `${masterBed.id}-ensuite`,
                     type: 'ensuite',
                     label: 'Master\nEnsuite',
-                    x,
-                    y: y + h,
+                    x: ensuiteX,
+                    y: ensuiteY,
                     w: ensuiteW,
-                    h: ensuiteH - roomPadding / 2,
-                    doors: [{ x: ensuiteDoorX, y: y + h, direction: 'up', swing: 'ccw' }],
+                    h: actualEnsuiteH,
+                    doors: ensuiteDoors,
                 });
             }
         }
@@ -510,13 +682,13 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                 const hasEnsuite = bed.hasEnsuite;
                 const ensuiteW = hasEnsuite ? secondaryZoneW * 0.35 : 0;
                 
-                const x = wall + masterZoneW + centralZoneW + roomPadding / 2;
-                const y = wall + idx * bedH + roomPadding / 2;
+                const x = layoutOriginX + wall + masterZoneW + centralZoneW + roomPadding / 2;
+                const y = layoutOriginY + wall + idx * bedH + roomPadding / 2;
                 const w = secondaryZoneW - ensuiteW - roomPadding;
                 const h = bedH - roomPadding;
                 
-                // Door on left wall, offset from top
-                const doorOffset = Math.max(0.3, h * 0.25);
+                // Create doors using helper - respects numDoors config (max 2)
+                const bedroomDoors = createRoomDoors(bed.numDoors || 1, x, y, w, h, 'left', idx);
                 
                 rooms.push({
                     id: bed.id,
@@ -526,42 +698,60 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                     y,
                     w,
                     h,
-                    doors: [{ x: x, y: y + doorOffset, direction: 'left', swing: idx % 2 === 0 ? 'cw' : 'ccw' }],
+                    doors: bedroomDoors,
                     hasEnsuite,
                 });
 
                 if (hasEnsuite) {
-                    // Ensuite door centered on left wall
+                    // Ensuite attached to bedroom - door ONLY connects to parent bedroom
                     const ensuiteH = h * 0.6;
-                    const ensuiteDoorY = y + (ensuiteH - doorWidth) / 2;
+                    const ensuiteX = x + w;
+                    const ensuiteY = y;
+                    const actualEnsuiteW = ensuiteW - roomPadding / 2;
+                    
+                    const ensuiteDoors = createEnsuiteDoor(
+                        ensuiteX, ensuiteY, actualEnsuiteW, ensuiteH,
+                        x, y, w, h
+                    );
                     
                     rooms.push({
                         id: `${bed.id}-ensuite`,
                         type: 'ensuite',
                         label: 'Ensuite',
-                        x: x + w,
-                        y,
-                        w: ensuiteW - roomPadding / 2,
+                        x: ensuiteX,
+                        y: ensuiteY,
+                        w: actualEnsuiteW,
                         h: ensuiteH,
-                        doors: [{ x: x + w, y: ensuiteDoorY, direction: 'left', swing: 'ccw' }],
+                        doors: ensuiteDoors,
                     });
                 }
             });
         }
 
-        // Bathrooms in central zone (top)
+        // Bathrooms in central zone - DISTRIBUTE them if multiple
         if (numBathrooms > 0) {
             const bathAreaH = innerH * 0.35;
-            const bathW = centralZoneW / numBathrooms;
             
             req.bathrooms.forEach((bath, idx) => {
-                const x = wall + masterZoneW + idx * bathW + roomPadding / 2;
-                const y = wall + roomPadding / 2;
-                const actualBathW = bathW - roomPadding;
-                const actualBathH = bathAreaH - roomPadding;
+                let x: number, y: number, actualBathW: number, actualBathH: number;
                 
-                // Door centered on bottom wall
-                const doorX = x + (actualBathW - doorWidth) / 2;
+                if (idx === 0) {
+                    // First bathroom at top of central zone
+                    x = layoutOriginX + wall + masterZoneW + roomPadding / 2;
+                    y = layoutOriginY + wall + roomPadding / 2;
+                    actualBathW = centralZoneW * 0.6 - roomPadding;
+                    actualBathH = bathAreaH - roomPadding;
+                } else {
+                    // Subsequent bathrooms distributed to different positions
+                    // Place at bottom of central zone or offset position
+                    x = layoutOriginX + wall + masterZoneW + centralZoneW * 0.5 + roomPadding / 2;
+                    y = layoutOriginY + wall + innerH - bathAreaH + roomPadding / 2;
+                    actualBathW = centralZoneW * 0.5 - roomPadding;
+                    actualBathH = bathAreaH - roomPadding;
+                }
+                
+                // Create bathroom doors respecting numDoors config (max 2)
+                const bathroomDoors = createRoomDoors(bath.numDoors || 1, x, y, actualBathW, actualBathH, 'bottom', idx);
                 
                 rooms.push({
                     id: bath.id,
@@ -571,7 +761,7 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                     y,
                     w: actualBathW,
                     h: actualBathH,
-                    doors: [{ x: doorX, y: y + actualBathH, direction: 'down', swing: 'cw' }],
+                    doors: bathroomDoors,
                 });
             });
         }
@@ -579,16 +769,19 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
         // Common areas in central zone (bottom)
         if (numCommon > 0) {
             const bathAreaH = numBathrooms > 0 ? innerH * 0.35 : 0;
-            const commonStartY = wall + bathAreaH;
-            const commonH = (innerH - bathAreaH) / numCommon;
+            // Reserve space if there's a second bathroom at bottom
+            const bottomBathSpace = numBathrooms > 1 ? bathAreaH * 0.5 : 0;
+            const commonStartY = layoutOriginY + wall + bathAreaH;
+            const commonH = (innerH - bathAreaH - bottomBathSpace) / numCommon;
             
             req.commonAreas.forEach((room, idx) => {
-                const x = wall + masterZoneW + roomPadding / 2;
+                const x = layoutOriginX + wall + masterZoneW + roomPadding / 2;
                 const y = commonStartY + idx * commonH + roomPadding / 2;
                 const actualCommonW = centralZoneW - roomPadding;
+                const h = commonH - roomPadding;
                 
-                // Door centered on top wall
-                const doorX = x + (actualCommonW - doorWidth) / 2;
+                // Create doors using helper - respects numDoors config (max 2)
+                const commonDoors = createRoomDoors(room.numDoors || 1, x, y, actualCommonW, h, 'top', idx);
                 
                 rooms.push({
                     id: room.id,
@@ -597,8 +790,8 @@ const generateFloorPlan = (req: UserRequirements, variant: number = 0): FloorPla
                     x,
                     y,
                     w: actualCommonW,
-                    h: commonH - roomPadding,
-                    doors: [{ x: doorX, y: y, direction: 'up', swing: idx % 2 === 0 ? 'cw' : 'ccw' }],
+                    h,
+                    doors: commonDoors,
                 });
             });
         }
@@ -949,9 +1142,9 @@ const Room3D = ({ room, wallHeight = 2.8 }: { room: Room; wallHeight?: number })
     const centerX = room.x + room.w / 2;
     const centerZ = room.y + room.h / 2;
 
-    // Check which walls have doors
-    const getDoorInfo = (wallSide: 'left' | 'right' | 'top' | 'bottom') => {
-        const door = room.doors.find(d => {
+    // Get ALL doors for a specific wall (handles multiple doors per wall)
+    const getDoorsForWall = (wallSide: 'left' | 'right' | 'top' | 'bottom') => {
+        const wallDoors = room.doors.filter(d => {
             if (wallSide === 'bottom' && d.direction === 'down') return true;
             if (wallSide === 'top' && d.direction === 'up') return true;
             if (wallSide === 'left' && d.direction === 'left') return true;
@@ -959,22 +1152,28 @@ const Room3D = ({ room, wallHeight = 2.8 }: { room: Room; wallHeight?: number })
             return false;
         });
         
-        if (!door) return { hasDoor: false, doorPosition: 0.5 };
-        
-        // Calculate door position along the wall (0-1)
-        let doorPos = 0.5;
-        if (wallSide === 'left' || wallSide === 'right') {
-            doorPos = (door.y - room.y) / room.h;
-        } else {
-            doorPos = (door.x - room.x) / room.w;
-        }
-        return { hasDoor: true, doorPosition: Math.max(0.15, Math.min(0.85, doorPos + 0.4)) };
+        return wallDoors.map(door => {
+            // Calculate door position along the wall (0-1)
+            let doorPos = 0.5;
+            if (wallSide === 'left' || wallSide === 'right') {
+                doorPos = (door.y - room.y) / room.h;
+            } else {
+                doorPos = (door.x - room.x) / room.w;
+            }
+            return { doorPosition: Math.max(0.15, Math.min(0.85, doorPos + 0.4)) };
+        });
     };
 
-    const bottomDoor = getDoorInfo('bottom');
-    const topDoor = getDoorInfo('top');
-    const leftDoor = getDoorInfo('left');
-    const rightDoor = getDoorInfo('right');
+    const bottomDoors = getDoorsForWall('bottom');
+    const topDoors = getDoorsForWall('top');
+    const leftDoors = getDoorsForWall('left');
+    const rightDoors = getDoorsForWall('right');
+
+    // Helper to determine if wall has doors
+    const hasBottomDoor = bottomDoors.length > 0;
+    const hasTopDoor = topDoors.length > 0;
+    const hasLeftDoor = leftDoors.length > 0;
+    const hasRightDoor = rightDoors.length > 0;
 
     return (
         <group>
@@ -997,20 +1196,20 @@ const Room3D = ({ room, wallHeight = 2.8 }: { room: Room; wallHeight?: number })
                 {room.label.replace('\n', ' ')}
             </Text>
 
-            {/* Front wall (bottom in 2D = +Z in 3D) */}
+            {/* Front wall (bottom in 2D = +Z in 3D) - render first door */}
             <Wall3D
                 position={[centerX, wallHeight / 2, room.y + room.h - wallThickness / 2]}
                 size={[room.w, wallHeight, wallThickness]}
-                hasDoor={bottomDoor.hasDoor}
-                doorPosition={bottomDoor.doorPosition}
+                hasDoor={hasBottomDoor}
+                doorPosition={bottomDoors[0]?.doorPosition || 0.5}
             />
 
             {/* Back wall (top in 2D = -Z in 3D) */}
             <Wall3D
                 position={[centerX, wallHeight / 2, room.y + wallThickness / 2]}
                 size={[room.w, wallHeight, wallThickness]}
-                hasDoor={topDoor.hasDoor}
-                doorPosition={topDoor.doorPosition}
+                hasDoor={hasTopDoor}
+                doorPosition={topDoors[0]?.doorPosition || 0.5}
             />
 
             {/* Left wall */}
@@ -1018,8 +1217,8 @@ const Room3D = ({ room, wallHeight = 2.8 }: { room: Room; wallHeight?: number })
                 position={[room.x + wallThickness / 2, wallHeight / 2, centerZ]}
                 size={[room.h, wallHeight, wallThickness]}
                 rotation={[0, Math.PI / 2, 0]}
-                hasDoor={leftDoor.hasDoor}
-                doorPosition={leftDoor.doorPosition}
+                hasDoor={hasLeftDoor}
+                doorPosition={leftDoors[0]?.doorPosition || 0.5}
             />
 
             {/* Right wall */}
@@ -1027,9 +1226,20 @@ const Room3D = ({ room, wallHeight = 2.8 }: { room: Room; wallHeight?: number })
                 position={[room.x + room.w - wallThickness / 2, wallHeight / 2, centerZ]}
                 size={[room.h, wallHeight, wallThickness]}
                 rotation={[0, Math.PI / 2, 0]}
-                hasDoor={rightDoor.hasDoor}
-                doorPosition={rightDoor.doorPosition}
+                hasDoor={hasRightDoor}
+                doorPosition={rightDoors[0]?.doorPosition || 0.5}
             />
+            
+            {/* Render additional doors (when 2 doors on same wall) */}
+            {bottomDoors.length > 1 && bottomDoors.slice(1).map((door, idx) => (
+                <Wall3D
+                    key={`bottom-door-${idx}`}
+                    position={[centerX + (idx + 1) * 0.1, wallHeight / 2, room.y + room.h - wallThickness / 2 - 0.01]}
+                    size={[1.2, wallHeight, wallThickness]}
+                    hasDoor={true}
+                    doorPosition={door.doorPosition}
+                />
+            ))}
         </group>
     );
 };
@@ -1149,13 +1359,24 @@ const createDefaultRequirements = (): UserRequirements => ({
     commonAreas: [],
 });
 
+const normalizeRequirements = (requirements?: Partial<UserRequirements> | null): UserRequirements => {
+    const base = createDefaultRequirements();
+    return {
+        ...base,
+        ...requirements,
+        bedrooms: requirements?.bedrooms || [],
+        bathrooms: requirements?.bathrooms || [],
+        commonAreas: requirements?.commonAreas || [],
+    };
+};
+
 interface PageProps {
     project?: FloorPlanProject;
 }
 
 export default function FloorPlan({ project }: PageProps) {
     const [step, setStep] = useState(0);
-    const [requirements, setRequirements] = useState<UserRequirements>(project?.requirements || createDefaultRequirements());
+    const [requirements, setRequirements] = useState<UserRequirements>(normalizeRequirements(project?.requirements));
     const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
     const [generatedPlans, setGeneratedPlans] = useState<FloorPlanResult[] | null>(project?.generated_plans || null);
     const [selectedPlanIndex, setSelectedPlanIndex] = useState(project?.selected_plan_index || 0);
@@ -1178,7 +1399,7 @@ export default function FloorPlan({ project }: PageProps) {
     // Load project data when component mounts with a project prop
     useEffect(() => {
         if (project) {
-            setRequirements(project.requirements || createDefaultRequirements());
+            setRequirements(normalizeRequirements(project.requirements));
             setGeneratedPlans(project.generated_plans || null);
             setSelectedPlanIndex(project.selected_plan_index || 0);
             setCurrentProjectId(project.id);
@@ -1244,7 +1465,7 @@ export default function FloorPlan({ project }: PageProps) {
 
     // Load a project
     const handleLoadProject = (proj: FloorPlanProject) => {
-        setRequirements(proj.requirements);
+        setRequirements(normalizeRequirements(proj.requirements));
         setGeneratedPlans(proj.generated_plans);
         setSelectedPlanIndex(proj.selected_plan_index);
         setCurrentProjectId(proj.id);
@@ -1949,11 +2170,11 @@ export default function FloorPlan({ project }: PageProps) {
                                                     </button>
                                                 </div>
                                             </div>
-                                            
+
                                             <div className="grid gap-6 sm:grid-cols-2">
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        Width ({unit === 'meters' ? 'm' : 'ft'})
+                                                        Approx Width ({unit === 'meters' ? 'm' : 'ft'})
                                                     </label>
                                                     <input
                                                         type="number"
@@ -1975,7 +2196,7 @@ export default function FloorPlan({ project }: PageProps) {
                                                 </div>
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        Depth ({unit === 'meters' ? 'm' : 'ft'})
+                                                        Approx Length ({unit === 'meters' ? 'm' : 'ft'})
                                                     </label>
                                                     <input
                                                         type="number"
@@ -1998,10 +2219,10 @@ export default function FloorPlan({ project }: PageProps) {
                                             </div>
                                             <div className="rounded-xl bg-blue-50 p-4">
                                                 <p className="text-sm text-blue-800">
-                                                    <strong>Total area:</strong> {(requirements.plotWidth * requirements.plotDepth).toFixed(1)} m² 
+                                                    <strong>Total area:</strong> {plotArea.toFixed(1)} m² 
                                                     {unit === 'feet' && (
                                                         <span className="text-gray-600">
-                                                            ({(requirements.plotWidth * requirements.plotDepth * 10.7639).toFixed(1)} sq ft)
+                                                            ({(plotArea * 10.7639).toFixed(1)} sq ft)
                                                         </span>
                                                     )}
                                                 </p>
@@ -2192,7 +2413,7 @@ export default function FloorPlan({ project }: PageProps) {
                                                                             <div>
                                                                                 <label className="block text-xs font-medium text-gray-700 mb-1">Doors</label>
                                                                                 <div className="flex gap-1">
-                                                                                    {[1, 2, 3, 4].map((n) => (
+                                                                                    {[1, 2].map((n) => (
                                                                                         <button
                                                                                             key={n}
                                                                                             onClick={() => updateRoomConfig('bedrooms', idx, { numDoors: n })}
@@ -2303,7 +2524,7 @@ export default function FloorPlan({ project }: PageProps) {
                                                                                 <input
                                                                                     type="number"
                                                                                     min={1}
-                                                                                    max={4}
+                                                                                    max={2}
                                                                                     value={room.numDoors}
                                                                                     onChange={(e) => updateRoomConfig('commonAreas', idx, { numDoors: Number(e.target.value) })}
                                                                                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
@@ -2395,10 +2616,7 @@ export default function FloorPlan({ project }: PageProps) {
                                                         Generating...
                                                     </>
                                                 ) : (
-                                                    <>
-                                                        <Sparkles className="h-4 w-4" />
-                                                        Generate
-                                                    </>
+                                                    'Generate'
                                                 )}
                                             </button>
                                         </div>

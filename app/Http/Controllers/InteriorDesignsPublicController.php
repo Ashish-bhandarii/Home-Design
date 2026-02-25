@@ -146,17 +146,27 @@ class InteriorDesignsPublicController extends Controller
             mkdir(storage_path('app/temp'), 0755, true);
         }
 
-        // Create ZIP archive
-        $zip = new \ZipArchive();
-        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
-            foreach ($files as $file) {
-                if (file_exists($file['path'])) {
-                    $zip->addFile($file['path'], $file['name'] . '.' . $file['extension']);
+        // Check if ZipArchive extension uses
+        if (!extension_loaded('zip') || !class_exists('\ZipArchive')) {
+            return back()->with('error', 'Download functionality is currently unavailable (ZIP extension missing).');
+        }
+
+        try {
+            // Create ZIP archive
+            $zip = new \ZipArchive();
+            if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+                foreach ($files as $file) {
+                    if (file_exists($file['path'])) {
+                        $zip->addFile($file['path'], $file['name'] . '.' . $file['extension']);
+                    }
                 }
+                $zip->close();
+            } else {
+                return back()->with('error', 'Failed to create download archive.');
             }
-            $zip->close();
-        } else {
-            return back()->with('error', 'Failed to create download archive.');
+        } catch (\Throwable $e) {
+             report($e);
+             return back()->with('error', 'An error occurred while creating the download archive.');
         }
 
         // Return download response and delete temp file after sending

@@ -87,7 +87,7 @@ export default function Footer() {
                 <div className="flex gap-3">
                   {social.map(({ href, label, icon: Icon }) => (
                     <a
-                      key={href}
+                      key={label}
                       href={href}
                       aria-label={label}
                       target="_blank"

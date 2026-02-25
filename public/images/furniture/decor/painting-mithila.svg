@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="mt-wood" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6B4226"/>
+      <stop offset="50%" stop-color="#5D3A1A"/>
+      <stop offset="100%" stop-color="#4A2E14"/>
+    </linearGradient>
+  </defs>
+  <!-- Shadow -->
+  <rect x="4" y="4" width="116" height="116" rx="2" fill="rgba(0,0,0,0.3)"/>
+  <!-- Outer frame -->
+  <rect x="0" y="0" width="116" height="116" rx="2" fill="url(#mt-wood)" stroke="#3E2610" stroke-width="1.5"/>
+  <!-- Inner frame -->
+  <rect x="6" y="6" width="104" height="104" rx="1" fill="#4A2E14" stroke="#7B5B3A" stroke-width="1"/>
+  <!-- Canvas - cream/off-white like traditional Mithila paper -->
+  <rect x="10" y="10" width="96" height="96" fill="#FFF8DC"/>
+  <!-- Border pattern - bright orange/red -->
+  <rect x="10" y="10" width="96" height="96" fill="none" stroke="#FF4500" stroke-width="2"/>
+  <rect x="14" y="14" width="88" height="88" fill="none" stroke="#FF4500" stroke-width="1"/>
+  <!-- Dots along border -->
+  <circle cx="18" cy="12" r="1" fill="#FF4500"/>
+  <circle cx="28" cy="12" r="1" fill="#FF4500"/>
+  <circle cx="38" cy="12" r="1" fill="#FF4500"/>
+  <circle cx="48" cy="12" r="1" fill="#FF4500"/>
+  <circle cx="58" cy="12" r="1" fill="#FF4500"/>
+  <circle cx="68" cy="12" r="1" fill="#FF4500"/>
+  <circle cx="78" cy="12" r="1" fill="#FF4500"/>
+  <circle cx="88" cy="12" r="1" fill="#FF4500"/>
+  <circle cx="98" cy="12" r="1" fill="#FF4500"/>
+  <circle cx="18" cy="104" r="1" fill="#FF4500"/>
+  <circle cx="28" cy="104" r="1" fill="#FF4500"/>
+  <circle cx="38" cy="104" r="1" fill="#FF4500"/>
+  <circle cx="48" cy="104" r="1" fill="#FF4500"/>
+  <circle cx="58" cy="104" r="1" fill="#FF4500"/>
+  <circle cx="68" cy="104" r="1" fill="#FF4500"/>
+  <circle cx="78" cy="104" r="1" fill="#FF4500"/>
+  <circle cx="88" cy="104" r="1" fill="#FF4500"/>
+  <circle cx="98" cy="104" r="1" fill="#FF4500"/>
+  <!-- Central mandala-like design -->
+  <circle cx="58" cy="58" r="28" fill="none" stroke="#FF4500" stroke-width="1.5"/>
+  <circle cx="58" cy="58" r="22" fill="none" stroke="#DC143C" stroke-width="1"/>
+  <circle cx="58" cy="58" r="16" fill="none" stroke="#FF4500" stroke-width="0.8"/>
+  <circle cx="58" cy="58" r="8" fill="#FF6347" opacity="0.4"/>
+  <circle cx="58" cy="58" r="4" fill="#FF4500"/>
+  <!-- Petal shapes around center -->
+  <ellipse cx="58" cy="38" rx="4" ry="8" fill="none" stroke="#DC143C" stroke-width="0.8" transform="rotate(0,58,58)"/>
+  <ellipse cx="58" cy="38" rx="4" ry="8" fill="none" stroke="#DC143C" stroke-width="0.8" transform="rotate(45,58,58)"/>
+  <ellipse cx="58" cy="38" rx="4" ry="8" fill="none" stroke="#DC143C" stroke-width="0.8" transform="rotate(90,58,58)"/>
+  <ellipse cx="58" cy="38" rx="4" ry="8" fill="none" stroke="#DC143C" stroke-width="0.8" transform="rotate(135,58,58)"/>
+  <ellipse cx="58" cy="38" rx="4" ry="8" fill="none" stroke="#DC143C" stroke-width="0.8" transform="rotate(180,58,58)"/>
+  <ellipse cx="58" cy="38" rx="4" ry="8" fill="none" stroke="#DC143C" stroke-width="0.8" transform="rotate(225,58,58)"/>
+  <ellipse cx="58" cy="38" rx="4" ry="8" fill="none" stroke="#DC143C" stroke-width="0.8" transform="rotate(270,58,58)"/>
+  <ellipse cx="58" cy="38" rx="4" ry="8" fill="none" stroke="#DC143C" stroke-width="0.8" transform="rotate(315,58,58)"/>
+  <!-- Fish motifs (traditional Mithila) -->
+  <!-- Fish top-left -->
+  <path d="M22,25 Q28,22 32,25 Q28,28 22,25 Z" fill="#FF4500" opacity="0.7"/>
+  <circle cx="30" cy="24.5" r="0.8" fill="#FFF8DC"/>
+  <line x1="20" y1="25" x2="22" y2="23" stroke="#FF4500" stroke-width="0.5"/>
+  <line x1="20" y1="25" x2="22" y2="27" stroke="#FF4500" stroke-width="0.5"/>
+  <!-- Fish top-right -->
+  <path d="M84,25 Q90,22 94,25 Q90,28 84,25 Z" fill="#FF4500" opacity="0.7"/>
+  <circle cx="92" cy="24.5" r="0.8" fill="#FFF8DC"/>
+  <line x1="82" y1="25" x2="84" y2="23" stroke="#FF4500" stroke-width="0.5"/>
+  <line x1="82" y1="25" x2="84" y2="27" stroke="#FF4500" stroke-width="0.5"/>
+  <!-- Fish bottom-left -->
+  <path d="M22,91 Q28,88 32,91 Q28,94 22,91 Z" fill="#FF4500" opacity="0.7"/>
+  <circle cx="30" cy="90.5" r="0.8" fill="#FFF8DC"/>
+  <!-- Fish bottom-right -->
+  <path d="M84,91 Q90,88 94,91 Q90,94 84,91 Z" fill="#FF4500" opacity="0.7"/>
+  <circle cx="92" cy="90.5" r="0.8" fill="#FFF8DC"/>
+  <!-- Peacock motifs in corners -->
+  <!-- Top left corner design -->
+  <circle cx="25" cy="40" r="5" fill="none" stroke="#228B22" stroke-width="0.8"/>
+  <circle cx="25" cy="40" r="2" fill="#228B22" opacity="0.4"/>
+  <!-- Top right corner design -->
+  <circle cx="91" cy="40" r="5" fill="none" stroke="#228B22" stroke-width="0.8"/>
+  <circle cx="91" cy="40" r="2" fill="#228B22" opacity="0.4"/>
+  <!-- Bottom geometric patterns -->
+  <rect x="20" y="72" width="8" height="8" fill="none" stroke="#FF4500" stroke-width="0.8"/>
+  <line x1="20" y1="72" x2="28" y2="80" stroke="#FF4500" stroke-width="0.5"/>
+  <line x1="28" y1="72" x2="20" y2="80" stroke="#FF4500" stroke-width="0.5"/>
+  <rect x="88" y="72" width="8" height="8" fill="none" stroke="#FF4500" stroke-width="0.8"/>
+  <line x1="88" y1="72" x2="96" y2="80" stroke="#FF4500" stroke-width="0.5"/>
+  <line x1="96" y1="72" x2="88" y2="80" stroke="#FF4500" stroke-width="0.5"/>
+  <!-- Leaf/vine decorations -->
+  <path d="M16,50 Q20,45 24,50 Q20,55 16,50" fill="#228B22" opacity="0.5"/>
+  <path d="M92,50 Q96,45 100,50 Q96,55 92,50" fill="#228B22" opacity="0.5"/>
+  <path d="M16,66 Q20,61 24,66 Q20,71 16,66" fill="#228B22" opacity="0.5"/>
+  <path d="M92,66 Q96,61 100,66 Q96,71 92,66" fill="#228B22" opacity="0.5"/>
+  <!-- Sun motif top center -->
+  <circle cx="58" cy="20" r="4" fill="#FFD700" stroke="#FF4500" stroke-width="0.5"/>
+  <line x1="58" y1="14" x2="58" y2="16" stroke="#FF4500" stroke-width="0.5"/>
+  <line x1="52" y1="20" x2="54" y2="20" stroke="#FF4500" stroke-width="0.5"/>
+  <line x1="62" y1="20" x2="64" y2="20" stroke="#FF4500" stroke-width="0.5"/>
+  <line x1="54" y1="16" x2="55.5" y2="17.5" stroke="#FF4500" stroke-width="0.5"/>
+  <line x1="62" y1="16" x2="60.5" y2="17.5" stroke="#FF4500" stroke-width="0.5"/>
+</svg>

@@ -21,6 +21,7 @@ interface Material {
     unit: string;
     color?: string;
     image?: string;
+    imageUrl?: string | null;
     isActive: boolean;
     isFeatured: boolean;
     createdAt: string;
@@ -89,7 +90,7 @@ export default function MaterialsIndex({ materials, categories, types }: Props) 
                     </div>
                     <Link
                         href="/admin/materials/create"
-                        className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/30 transition-all hover:shadow-xl"
+                        className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:bg-indigo-500 dark:hover:bg-indigo-400"
                     >
                         <Plus className="h-4 w-4" />
                         Add Material
@@ -245,8 +246,8 @@ export default function MaterialsIndex({ materials, categories, types }: Props) 
                                                     className="flex h-12 w-12 items-center justify-center rounded-lg"
                                                     style={{ backgroundColor: item.color || '#F1F5F9' }}
                                                 >
-                                                    {item.image ? (
-                                                        <img src={item.image.startsWith('http') ? item.image : `/storage/${item.image}`} alt={item.name} className="h-full w-full rounded-lg object-cover" />
+                                                    {item.imageUrl ? (
+                                                        <img src={item.imageUrl} alt={item.name} className="h-full w-full rounded-lg object-cover" />
                                                     ) : !item.color ? (
                                                         <Layers className="h-6 w-6 text-slate-400" />
                                                     ) : null}

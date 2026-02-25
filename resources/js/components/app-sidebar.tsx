@@ -57,7 +57,7 @@ export function AppSidebar() {
             icon: Layout,
         },
         {
-            title: 'Home Design',
+            title: 'Home Designs',
             href: '/design-home',
             icon: Home,
         },

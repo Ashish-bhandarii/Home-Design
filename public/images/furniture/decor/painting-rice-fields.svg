@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 95" width="160" height="95">
+  <defs>
+    <linearGradient id="rf-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#87CEEB"/>
+      <stop offset="100%" stop-color="#E0F0E8"/>
+    </linearGradient>
+    <linearGradient id="rf-wood" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6B4226"/>
+      <stop offset="50%" stop-color="#5D3A1A"/>
+      <stop offset="100%" stop-color="#4A2E14"/>
+    </linearGradient>
+    <linearGradient id="rf-t1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#228B22"/>
+      <stop offset="100%" stop-color="#2E8B2E"/>
+    </linearGradient>
+    <linearGradient id="rf-t2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#32CD32"/>
+      <stop offset="100%" stop-color="#228B22"/>
+    </linearGradient>
+    <linearGradient id="rf-t3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7CFC00"/>
+      <stop offset="100%" stop-color="#32CD32"/>
+    </linearGradient>
+  </defs>
+  <!-- Shadow -->
+  <rect x="4" y="4" width="156" height="91" rx="2" fill="rgba(0,0,0,0.3)"/>
+  <!-- Outer frame -->
+  <rect x="0" y="0" width="156" height="91" rx="2" fill="url(#rf-wood)" stroke="#3E2610" stroke-width="1.5"/>
+  <!-- Inner frame -->
+  <rect x="6" y="6" width="144" height="79" rx="1" fill="#4A2E14" stroke="#7B5B3A" stroke-width="1"/>
+  <!-- Canvas -->
+  <rect x="10" y="10" width="136" height="71" fill="url(#rf-sky)"/>
+  <!-- Distant misty hills -->
+  <polygon points="10,35 30,22 55,30 80,20 110,28 136,24 146,30 146,42 10,42" fill="#90EE90" opacity="0.3"/>
+  <!-- Terrace level 1 (distant) -->
+  <path d="M10,38 Q40,32 80,36 Q120,32 146,38 L146,46 Q120,40 80,44 Q40,40 10,46 Z" fill="url(#rf-t1)" opacity="0.7"/>
+  <line x1="10" y1="42" x2="146" y2="42" stroke="#1B6B1B" stroke-width="0.4" opacity="0.5"/>
+  <!-- Terrace level 2 -->
+  <path d="M10,44 Q45,38 80,42 Q115,38 146,44 L146,52 Q115,46 80,50 Q45,46 10,52 Z" fill="url(#rf-t2)" opacity="0.8"/>
+  <line x1="10" y1="48" x2="146" y2="48" stroke="#1B8B1B" stroke-width="0.4" opacity="0.5"/>
+  <!-- Water on terrace 2 -->
+  <path d="M25,46 Q50,44 75,46 Q100,44 120,46 L120,48 Q100,46 75,48 Q50,46 25,48 Z" fill="#87CEEB" opacity="0.2"/>
+  <!-- Terrace level 3 -->
+  <path d="M10,50 Q50,44 80,48 Q110,44 146,50 L146,58 Q110,52 80,56 Q50,52 10,58 Z" fill="url(#rf-t3)" opacity="0.85"/>
+  <line x1="10" y1="54" x2="146" y2="54" stroke="#228B22" stroke-width="0.4" opacity="0.5"/>
+  <!-- Terrace level 4 -->
+  <path d="M10,56 Q55,50 80,54 Q105,50 146,56 L146,64 Q105,58 80,62 Q55,58 10,64 Z" fill="#32CD32" opacity="0.85"/>
+  <line x1="10" y1="60" x2="146" y2="60" stroke="#228B22" stroke-width="0.4" opacity="0.5"/>
+  <!-- Water reflection -->
+  <path d="M30,58 Q60,56 90,58 L90,60 Q60,58 30,60 Z" fill="#87CEEB" opacity="0.2"/>
+  <!-- Terrace level 5 (closest) -->
+  <path d="M10,62 Q60,56 80,60 Q100,56 146,62 L146,72 Q100,66 80,70 Q60,66 10,72 Z" fill="#228B22" opacity="0.9"/>
+  <!-- Foreground -->
+  <path d="M10,70 Q60,64 146,70 L146,81 L10,81 Z" fill="#1B5E1B"/>
+  <!-- Rice grain texture lines -->
+  <line x1="20" y1="65" x2="22" y2="62" stroke="#2E8B57" stroke-width="0.4"/>
+  <line x1="40" y1="63" x2="42" y2="60" stroke="#2E8B57" stroke-width="0.4"/>
+  <line x1="60" y1="61" x2="62" y2="58" stroke="#2E8B57" stroke-width="0.4"/>
+  <line x1="80" y1="62" x2="82" y2="59" stroke="#2E8B57" stroke-width="0.4"/>
+  <line x1="100" y1="60" x2="102" y2="57" stroke="#2E8B57" stroke-width="0.4"/>
+  <line x1="120" y1="62" x2="122" y2="59" stroke="#2E8B57" stroke-width="0.4"/>
+  <!-- Small hut on terrace -->
+  <rect x="118" y="44" width="8" height="6" fill="#D2B48C"/>
+  <polygon points="116,44 122,39 128,44" fill="#8B4513"/>
+  <!-- Tiny figure -->
+  <circle cx="70" cy="58" r="1.5" fill="#8B6914"/>
+  <line x1="70" y1="59.5" x2="70" y2="63" stroke="#8B6914" stroke-width="0.8"/>
+</svg>

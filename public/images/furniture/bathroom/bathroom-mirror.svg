@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80" width="100" height="80">
+  <defs>
+    <linearGradient id="ledGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#E0F2FE"/>
+      <stop offset="50%" style="stop-color:#BAE6FD"/>
+      <stop offset="100%" style="stop-color:#E0F2FE"/>
+    </linearGradient>
+    <linearGradient id="mirrorSurf" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E8F4FD"/>
+      <stop offset="30%" style="stop-color:#D1E8F8"/>
+      <stop offset="60%" style="stop-color:#C0DCF2"/>
+      <stop offset="100%" style="stop-color:#D8ECF9"/>
+    </linearGradient>
+  </defs>
+  <!-- LED backlight glow -->
+  <rect x="2" y="2" width="96" height="76" rx="6" fill="url(#ledGlow)" opacity="0.4"/>
+  <!-- Mirror frame -->
+  <rect x="4" y="4" width="92" height="72" rx="4" fill="#e5e7eb" stroke="#9ca3af" stroke-width="1.5"/>
+  <!-- Mirror surface -->
+  <rect x="7" y="7" width="86" height="66" rx="2" fill="url(#mirrorSurf)"/>
+  <!-- LED strip indicator (top) -->
+  <rect x="10" y="5" width="80" height="2" rx="1" fill="#93C5FD" opacity="0.8"/>
+  <!-- LED strip indicator (bottom) -->
+  <rect x="10" y="73" width="80" height="2" rx="1" fill="#93C5FD" opacity="0.8"/>
+  <!-- Reflection -->
+  <path d="M 12 12 L 35 12 L 12 40 Z" fill="#ffffff" opacity="0.3"/>
+  <line x1="15" y1="15" x2="28" y2="15" stroke="#fff" stroke-width="1.5" opacity="0.35" stroke-linecap="round"/>
+</svg>

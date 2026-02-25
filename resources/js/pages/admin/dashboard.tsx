@@ -18,6 +18,8 @@ import {
 interface DashboardStats {
     totalUsers: number;
     totalDesigns: number;
+    totalHomeDesigns: number;
+    totalInteriorDesigns: number;
     totalFurniture: number;
     totalMaterials: number;
     usersChange: number;
@@ -25,20 +27,22 @@ interface DashboardStats {
 }
 
 interface Props {
-    stats?: DashboardStats;
+    stats: DashboardStats;
 }
 
-// Default data for demonstration
+// Default data (fallback only if backend doesn't provide stats)
 const defaultStats: DashboardStats = {
-    totalUsers: 1248,
-    totalDesigns: 342,
-    totalFurniture: 156,
-    totalMaterials: 89,
-    usersChange: 12.5,
-    designsChange: 8.3,
+    totalUsers: 0,
+    totalDesigns: 0,
+    totalHomeDesigns: 0,
+    totalInteriorDesigns: 0,
+    totalFurniture: 0,
+    totalMaterials: 0,
+    usersChange: 0,
+    designsChange: 0,
 };
 
-const quickLinks = [
+const getQuickLinks = (stats: DashboardStats) => [
     { 
         title: 'Home Designs', 
         description: 'Manage house design templates',
@@ -47,7 +51,7 @@ const quickLinks = [
         color: 'from-blue-500 to-cyan-500',
         bgLight: 'bg-blue-50',
         bgDark: 'dark:bg-blue-950/30',
-        count: 45
+        count: stats.totalHomeDesigns
     },
     { 
         title: 'Interior Designs', 
@@ -57,7 +61,7 @@ const quickLinks = [
         color: 'from-purple-500 to-pink-500',
         bgLight: 'bg-purple-50',
         bgDark: 'dark:bg-purple-950/30',
-        count: 78
+        count: stats.totalInteriorDesigns
     },
     { 
         title: 'Furniture Library', 
@@ -67,7 +71,7 @@ const quickLinks = [
         color: 'from-amber-500 to-orange-500',
         bgLight: 'bg-amber-50',
         bgDark: 'dark:bg-amber-950/30',
-        count: 156
+        count: stats.totalFurniture
     },
     { 
         title: 'Materials', 
@@ -77,7 +81,7 @@ const quickLinks = [
         color: 'from-emerald-500 to-teal-500',
         bgLight: 'bg-emerald-50',
         bgDark: 'dark:bg-emerald-950/30',
-        count: 89
+        count: stats.totalMaterials
     },
 ];
 
@@ -204,7 +208,7 @@ export default function AdminDashboard({ stats = defaultStats }: Props) {
                         Quick Access
                     </h2>
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        {quickLinks.map((link) => {
+                        {getQuickLinks(stats).map((link) => {
                             const Icon = link.icon;
                             return (
                                 <Link

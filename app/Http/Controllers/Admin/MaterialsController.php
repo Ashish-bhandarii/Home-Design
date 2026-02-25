@@ -41,6 +41,9 @@ class MaterialsController extends Controller
                     'pricePerUnit' => $item->price_per_unit,
                     'unit' => $item->unit,
                     'image' => $item->image,
+                    'imageUrl' => $item->image
+                        ? (str_starts_with($item->image, 'http') ? $item->image : url(Storage::url($item->image)))
+                        : null,
                     'color' => $item->color,
                     'brand' => $item->brand,
                     'specifications' => $item->specifications,
@@ -79,10 +82,14 @@ class MaterialsController extends Controller
             'brand' => 'nullable|string',
             'specifications' => 'nullable|string',
             'availability' => 'nullable|string',
-            'is_active' => 'boolean',
-            'is_featured' => 'boolean',
+            'stock' => 'nullable|integer|min:0',
+            'is_active' => 'sometimes|boolean',
+            'is_featured' => 'sometimes|boolean',
         ]);
 
+        // Set booleans properly
+        $validated['is_active'] = $request->boolean('is_active');
+        $validated['is_featured'] = $request->boolean('is_featured');
         $validated['slug'] = Str::slug($validated['name']);
 
         if ($request->hasFile('image')) {
@@ -107,6 +114,9 @@ class MaterialsController extends Controller
                 'price_per_unit' => $material->price_per_unit,
                 'unit' => $material->unit,
                 'image' => $material->image,
+                'imageUrl' => $material->image
+                    ? (str_starts_with($material->image, 'http') ? $material->image : url(Storage::url($material->image)))
+                    : null,
                 'color' => $material->color,
                 'brand' => $material->brand,
                 'specifications' => $material->specifications,
@@ -136,9 +146,14 @@ class MaterialsController extends Controller
             'brand' => 'nullable|string',
             'specifications' => 'nullable|string',
             'availability' => 'nullable|string',
-            'is_active' => 'boolean',
-            'is_featured' => 'boolean',
+            'stock' => 'nullable|integer|min:0',
+            'is_active' => 'sometimes|boolean',
+            'is_featured' => 'sometimes|boolean',
         ]);
+
+        // Set booleans properly
+        $validated['is_active'] = $request->boolean('is_active');
+        $validated['is_featured'] = $request->boolean('is_featured');
 
         if ($request->hasFile('image')) {
             // Delete old image only if it's a local file, not an external URL

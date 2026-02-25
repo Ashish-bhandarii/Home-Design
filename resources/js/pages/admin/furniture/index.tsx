@@ -20,6 +20,7 @@ interface Furniture {
     room: string;
     price: number;
     image?: string;
+    imageUrl?: string | null;
     isActive: boolean;
     isFeatured: boolean;
     stock: number;
@@ -243,7 +244,11 @@ export default function FurnitureIndex({ furniture, categories, rooms }: Props) 
                                             <div className="flex items-center gap-3">
                                                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
                                                     {item.image ? (
-                                                        <img src={item.image.startsWith('http') ? item.image : `/storage/${item.image}`} alt={item.name} className="h-full w-full rounded-lg object-cover" />
+                                                        <img
+                                                            src={item.imageUrl ?? (item.image.startsWith('http') ? item.image : `/storage/${item.image}`)}
+                                                            alt={item.name}
+                                                            className="h-full w-full rounded-lg object-cover"
+                                                        />
                                                     ) : (
                                                         <Armchair className="h-6 w-6 text-slate-400" />
                                                     )}

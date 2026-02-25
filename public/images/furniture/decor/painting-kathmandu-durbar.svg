@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 100" width="150" height="100">
+  <defs>
+    <linearGradient id="kd-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#D4A574"/>
+      <stop offset="100%" stop-color="#FFECD2"/>
+    </linearGradient>
+    <linearGradient id="kd-wood" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6B4226"/>
+      <stop offset="50%" stop-color="#5D3A1A"/>
+      <stop offset="100%" stop-color="#4A2E14"/>
+    </linearGradient>
+  </defs>
+  <!-- Shadow -->
+  <rect x="4" y="4" width="146" height="96" rx="2" fill="rgba(0,0,0,0.3)"/>
+  <!-- Outer frame -->
+  <rect x="0" y="0" width="146" height="96" rx="2" fill="url(#kd-wood)" stroke="#3E2610" stroke-width="1.5"/>
+  <!-- Inner frame -->
+  <rect x="6" y="6" width="134" height="84" rx="1" fill="#4A2E14" stroke="#7B5B3A" stroke-width="1"/>
+  <!-- Canvas -->
+  <rect x="10" y="10" width="126" height="76" fill="url(#kd-sky)"/>
+  <!-- Ground / square -->
+  <rect x="10" y="62" width="126" height="24" fill="#CD853F" opacity="0.6"/>
+  <!-- Brick paving pattern -->
+  <line x1="10" y1="68" x2="136" y2="68" stroke="#B8733A" stroke-width="0.3" opacity="0.5"/>
+  <line x1="10" y1="74" x2="136" y2="74" stroke="#B8733A" stroke-width="0.3" opacity="0.5"/>
+  <line x1="10" y1="80" x2="136" y2="80" stroke="#B8733A" stroke-width="0.3" opacity="0.5"/>
+  <!-- Main pagoda temple (center) - Taleju style -->
+  <rect x="55" y="30" width="28" height="32" fill="#A0522D"/>
+  <!-- Brick texture -->
+  <line x1="55" y1="38" x2="83" y2="38" stroke="#8B4513" stroke-width="0.3"/>
+  <line x1="55" y1="46" x2="83" y2="46" stroke="#8B4513" stroke-width="0.3"/>
+  <line x1="55" y1="54" x2="83" y2="54" stroke="#8B4513" stroke-width="0.3"/>
+  <!-- Pagoda roofs tier 1 -->
+  <polygon points="50,30 69,18 88,30" fill="#8B4513"/>
+  <line x1="48" y1="30" x2="90" y2="30" stroke="#6B3410" stroke-width="1"/>
+  <!-- Tier 2 -->
+  <polygon points="54,20 69,10 84,20" fill="#A0522D"/>
+  <line x1="52" y1="20" x2="86" y2="20" stroke="#6B3410" stroke-width="0.8"/>
+  <!-- Gold pinnacle -->
+  <line x1="69" y1="10" x2="69" y2="5" stroke="#FFD700" stroke-width="1.5"/>
+  <circle cx="69" cy="4" r="1.5" fill="#FFD700"/>
+  <!-- Temple door -->
+  <rect x="63" y="48" width="8" height="14" fill="#3E2610" rx="4" ry="0"/>
+  <path d="M63,48 Q67,42 71,48" fill="#3E2610"/>
+  <!-- Windows -->
+  <rect x="56" y="34" width="5" height="5" fill="#FFECD2" stroke="#5D3A1A" stroke-width="0.4"/>
+  <rect x="77" y="34" width="5" height="5" fill="#FFECD2" stroke="#5D3A1A" stroke-width="0.4"/>
+  <!-- Left building - multi-story -->
+  <rect x="15" y="38" width="22" height="24" fill="#B8733A"/>
+  <polygon points="12,38 26,26 40,38" fill="#8B4513"/>
+  <polygon points="16,28 26,20 36,28" fill="#A0522D"/>
+  <line x1="26" y1="20" x2="26" y2="16" stroke="#FFD700" stroke-width="1"/>
+  <!-- Left building windows (carved Newari style) -->
+  <rect x="18" y="42" width="4" height="5" fill="#FFECD2" stroke="#5D3A1A" stroke-width="0.3"/>
+  <rect x="25" y="42" width="4" height="5" fill="#FFECD2" stroke="#5D3A1A" stroke-width="0.3"/>
+  <rect x="32" y="42" width="4" height="5" fill="#FFECD2" stroke="#5D3A1A" stroke-width="0.3"/>
+  <rect x="18" y="52" width="4" height="5" fill="#FFECD2" stroke="#5D3A1A" stroke-width="0.3"/>
+  <rect x="25" y="52" width="4" height="5" fill="#FFECD2" stroke="#5D3A1A" stroke-width="0.3"/>
+  <rect x="32" y="52" width="4" height="5" fill="#FFECD2" stroke="#5D3A1A" stroke-width="0.3"/>
+  <!-- Right structure - Kasthamandap style -->
+  <rect x="98" y="40" width="24" height="22" fill="#A0522D"/>
+  <polygon points="95,40 110,28 125,40" fill="#8B4513"/>
+  <polygon points="98,30 110,22 122,30" fill="#A0522D"/>
+  <line x1="110" y1="22" x2="110" y2="18" stroke="#FFD700" stroke-width="1"/>
+  <rect x="105" y="50" width="6" height="12" fill="#3E2610"/>
+  <!-- Carved struts detail -->
+  <line x1="95" y1="40" x2="98" y2="44" stroke="#6B3410" stroke-width="0.5"/>
+  <line x1="125" y1="40" x2="122" y2="44" stroke="#6B3410" stroke-width="0.5"/>
+  <!-- Column/pillar in square -->
+  <rect x="46" y="55" width="3" height="7" fill="#8B8682"/>
+  <rect x="45" y="53" width="5" height="2" fill="#8B8682"/>
+  <!-- People silhouettes -->
+  <circle cx="50" cy="68" r="1.5" fill="#5D3A1A" opacity="0.5"/>
+  <line x1="50" y1="69.5" x2="50" y2="74" stroke="#5D3A1A" stroke-width="0.8" opacity="0.5"/>
+  <circle cx="90" cy="67" r="1.5" fill="#5D3A1A" opacity="0.5"/>
+  <line x1="90" y1="68.5" x2="90" y2="73" stroke="#5D3A1A" stroke-width="0.8" opacity="0.5"/>
+</svg>

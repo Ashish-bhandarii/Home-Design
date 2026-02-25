@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 90" width="80" height="90">
+  <!-- Wall Cabinet - Front View -->
+  <rect x="4" y="4" width="74" height="84" rx="1" fill="#00000015"/>
+  <!-- Cabinet body -->
+  <rect x="2" y="2" width="76" height="86" rx="2" fill="#f5f5f4" stroke="#d4d4d4" stroke-width="1.5"/>
+  <!-- Door -->
+  <rect x="5" y="5" width="70" height="80" rx="1" fill="#fafaf9" stroke="#d6d3d1" stroke-width="1"/>
+  <!-- Mirror on door -->
+  <rect x="10" y="10" width="60" height="70" rx="1" fill="#BAE6FD" stroke="#94a3b8" stroke-width="0.8"/>
+  <!-- Reflection -->
+  <path d="M 14 14 L 32 14 L 14 38 Z" fill="#fff" opacity="0.25"/>
+  <!-- Handle -->
+  <rect x="64" y="40" width="3" height="10" rx="1.5" fill="#a1a1aa" stroke="#71717a" stroke-width="0.5"/>
+</svg>

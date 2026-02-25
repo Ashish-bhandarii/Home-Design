@@ -46,7 +46,28 @@ class HomeDesignsController extends Controller
             });
         }
 
-        $designs = $query->latest()->paginate(12)->withQueryString();
+        $designs = $query->latest()->paginate(12)->withQueryString()->through(function ($design) {
+            return [
+                'id' => $design->id,
+                'name' => $design->name,
+                'description' => $design->description,
+                'style' => $design->style,
+                'total_floors' => $design->total_floors,
+                'total_area_sqft' => $design->total_area_sqft,
+                'bedrooms' => $design->bedrooms,
+                'bathrooms' => $design->bathrooms,
+                'cover_image' => $design->cover_image,
+                'cover_image_url' => $design->cover_image
+                    ? url(Storage::url($design->cover_image))
+                    : null,
+                'is_featured' => $design->is_featured,
+                'is_active' => $design->is_active,
+                'views' => $design->views,
+                'downloads' => $design->downloads,
+                'floor_designs_count' => $design->floor_designs_count,
+                'created_at' => $design->created_at,
+            ];
+        });
 
         return Inertia::render('admin/home-designs/index', [
             'designs' => $designs,
@@ -91,19 +112,21 @@ class HomeDesignsController extends Controller
             'dining_rooms' => 'nullable|integer|min:0',
             'balconies' => 'nullable|integer|min:0',
             'garages' => 'nullable|integer|min:0',
-            'has_basement' => 'boolean',
-            'has_terrace' => 'boolean',
-            'has_garden' => 'boolean',
-            'has_swimming_pool' => 'boolean',
+            'has_basement' => 'sometimes|boolean',
+            'has_terrace' => 'sometimes|boolean',
+            'has_garden' => 'sometimes|boolean',
+            'has_swimming_pool' => 'sometimes|boolean',
             'construction_type' => 'nullable|string|max:100',
             'facing_direction' => 'nullable|string|max:50',
             'estimated_cost_min' => 'nullable|numeric|min:0',
             'estimated_cost_max' => 'nullable|numeric|min:0',
             'cover_image' => 'nullable|image|max:5120',
+            'gallery_images.*' => 'nullable|image|max:5120',
+            'design_files.*' => 'nullable|file|max:51200',
             'features' => 'nullable|array',
             'tags' => 'nullable|array',
-            'is_featured' => 'boolean',
-            'is_active' => 'boolean',
+            'is_featured' => 'sometimes|boolean',
+            'is_active' => 'sometimes|boolean',
             // Floor designs
             'floors' => 'nullable|array',
             'floors.*.name' => 'required|string|max:255',
@@ -119,13 +142,21 @@ class HomeDesignsController extends Controller
             'floors.*.living_rooms' => 'nullable|integer|min:0',
             'floors.*.dining_rooms' => 'nullable|integer|min:0',
             'floors.*.balconies' => 'nullable|integer|min:0',
-            'floors.*.has_stairs' => 'boolean',
-            'floors.*.has_lift' => 'boolean',
-            'floors.*.has_puja_room' => 'boolean',
-            'floors.*.has_store_room' => 'boolean',
-            'floors.*.has_servant_room' => 'boolean',
+            'floors.*.has_stairs' => 'sometimes|boolean',
+            'floors.*.has_lift' => 'sometimes|boolean',
+            'floors.*.has_puja_room' => 'sometimes|boolean',
+            'floors.*.has_store_room' => 'sometimes|boolean',
+            'floors.*.has_servant_room' => 'sometimes|boolean',
             'floors.*.rooms' => 'nullable|array',
         ]);
+
+        // Set booleans properly
+        $validated['has_basement'] = $request->boolean('has_basement');
+        $validated['has_terrace'] = $request->boolean('has_terrace');
+        $validated['has_garden'] = $request->boolean('has_garden');
+        $validated['has_swimming_pool'] = $request->boolean('has_swimming_pool');
+        $validated['is_featured'] = $request->boolean('is_featured');
+        $validated['is_active'] = $request->boolean('is_active');
 
         DB::beginTransaction();
 
@@ -206,7 +237,59 @@ class HomeDesignsController extends Controller
         $homeDesign->load(['floorDesigns.rooms', 'files', 'images']);
 
         return Inertia::render('admin/home-designs/edit', [
-            'homeDesign' => $homeDesign,
+            'homeDesign' => [
+                'id' => $homeDesign->id,
+                'name' => $homeDesign->name,
+                'description' => $homeDesign->description,
+                'style' => $homeDesign->style,
+                'total_floors' => $homeDesign->total_floors,
+                'total_area_sqft' => $homeDesign->total_area_sqft,
+                'plot_width' => $homeDesign->plot_width,
+                'plot_length' => $homeDesign->plot_length,
+                'bedrooms' => $homeDesign->bedrooms,
+                'bathrooms' => $homeDesign->bathrooms,
+                'kitchens' => $homeDesign->kitchens,
+                'living_rooms' => $homeDesign->living_rooms,
+                'dining_rooms' => $homeDesign->dining_rooms,
+                'balconies' => $homeDesign->balconies,
+                'garages' => $homeDesign->garages,
+                'has_basement' => $homeDesign->has_basement,
+                'has_terrace' => $homeDesign->has_terrace,
+                'has_garden' => $homeDesign->has_garden,
+                'has_swimming_pool' => $homeDesign->has_swimming_pool,
+                'construction_type' => $homeDesign->construction_type,
+                'facing_direction' => $homeDesign->facing_direction,
+                'estimated_cost_min' => $homeDesign->estimated_cost_min,
+                'estimated_cost_max' => $homeDesign->estimated_cost_max,
+                'features' => $homeDesign->features,
+                'tags' => $homeDesign->tags,
+                'is_featured' => $homeDesign->is_featured,
+                'is_active' => $homeDesign->is_active,
+                'cover_image' => $homeDesign->cover_image,
+                'cover_image_url' => $homeDesign->cover_image
+                    ? url(Storage::url($homeDesign->cover_image))
+                    : null,
+                'images' => $homeDesign->images->map(function ($image) {
+                    return [
+                        'id' => $image->id,
+                        'image_path' => $image->image_path,
+                        'image_url' => $image->image_path
+                            ? url(Storage::url($image->image_path))
+                            : null,
+                        'sort_order' => $image->sort_order,
+                    ];
+                })->values(),
+                'files' => $homeDesign->files->map(function ($file) {
+                    return [
+                        'id' => $file->id,
+                        'title' => $file->title,
+                        'file_type' => $file->file_type,
+                        'file_path' => $file->file_path,
+                        'file_extension' => $file->file_extension,
+                        'file_size' => $file->file_size ? number_format($file->file_size / 1024 / 1024, 2) . ' MB' : null,
+                    ];
+                })->values(),
+            ],
             'styleOptions' => HomeDesign::styleOptions(),
             'constructionTypeOptions' => HomeDesign::constructionTypeOptions(),
             'facingDirectionOptions' => HomeDesign::facingDirectionOptions(),
@@ -246,12 +329,22 @@ class HomeDesignsController extends Controller
             'estimated_cost_min' => 'nullable|numeric|min:0',
             'estimated_cost_max' => 'nullable|numeric|min:0',
             'cover_image' => 'nullable|image|max:5120',
+            'gallery_images.*' => 'nullable|image|max:5120',
+            'design_files.*' => 'nullable|file|max:51200',
             'features' => 'nullable|array',
             'tags' => 'nullable|array',
             'is_featured' => 'sometimes|boolean',
             'is_active' => 'sometimes|boolean',
             'floors' => 'nullable|array',
         ]);
+
+        // Set booleans properly
+        $validated['has_basement'] = $request->boolean('has_basement');
+        $validated['has_terrace'] = $request->boolean('has_terrace');
+        $validated['has_garden'] = $request->boolean('has_garden');
+        $validated['has_swimming_pool'] = $request->boolean('has_swimming_pool');
+        $validated['is_featured'] = $request->boolean('is_featured');
+        $validated['is_active'] = $request->boolean('is_active');
 
         DB::beginTransaction();
 

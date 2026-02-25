@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 70 15" width="70" height="15">
+  <!-- Glass Bathroom Shelf - Front View -->
+  <!-- Wall brackets -->
+  <path d="M 5 2 L 5 13 L 15 13" fill="none" stroke="#a1a1aa" stroke-width="2" stroke-linecap="round"/>
+  <path d="M 65 2 L 65 13 L 55 13" fill="none" stroke="#a1a1aa" stroke-width="2" stroke-linecap="round"/>
+  <!-- Mounting screws -->
+  <circle cx="5" cy="3" r="2" fill="#71717a"/>
+  <circle cx="65" cy="3" r="2" fill="#71717a"/>
+  <!-- Glass shelf -->
+  <rect x="4" y="10" width="62" height="3" rx="0.5" fill="#e5e7eb" stroke="#94a3b8" stroke-width="0.5" opacity="0.8"/>
+  <!-- Glass highlight -->
+  <line x1="8" y1="11" x2="62" y2="11" stroke="#fff" stroke-width="0.8" opacity="0.4"/>
+</svg>

@@ -8,6 +8,7 @@ use App\Observers\OrderObserver;
 use App\Observers\UserObserver;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
+use Laravel\Fortify\Contracts\LogoutResponse as LogoutResponseContract;
 use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
 
 class AppServiceProvider extends ServiceProvider
@@ -25,7 +26,7 @@ class AppServiceProvider extends ServiceProvider
                 {
                     $user = $request->user();
                     $target = $user && $user->hasRole('admin') ? route('admin.dashboard') : route('dashboard');
-                    return redirect()->intended($target);
+                    return redirect()->intended($target)->with('success', 'Welcome back, ' . $user->name . '!');
                 }
             };
         });
@@ -36,7 +37,16 @@ class AppServiceProvider extends ServiceProvider
                 {
                     $user = $request->user();
                     $target = $user && $user->hasRole('admin') ? route('admin.dashboard') : route('dashboard');
-                    return redirect()->intended($target);
+                    return redirect()->intended($target)->with('success', 'Account created successfully! Welcome, ' . $user->name . '!');
+                }
+            };
+        });
+
+        $this->app->singleton(LogoutResponseContract::class, function () {
+            return new class implements LogoutResponseContract {
+                public function toResponse($request)
+                {
+                    return redirect('/')->with('success', 'You have been logged out successfully.');
                 }
             };
         });

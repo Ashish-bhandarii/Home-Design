@@ -138,7 +138,6 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                             </SheetContent>
                         </Sheet>
                     </div>
-
                     <Link
                         href={dashboard()}
                         prefetch
